@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+
+  "name": "AI Window Bridge",
+
+  "version": "0.5.0",
+
+  "description": "Connect browser AI windows to the local AI Window Bridge.",
+
+  "permissions": [
+    "tabs",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "http://127.0.0.1:8765/*",
+
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+
+    "https://claude.ai/*",
+
+    "https://gemini.google.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

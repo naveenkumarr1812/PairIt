@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test / Coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Chrome extension build output
+extension/dist/
+extension/build/
+
+# Package manager cache
+.npm/
