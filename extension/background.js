@@ -9,1038 +9,16 @@
  * only when a request for that provider arrives.
  */
 
-/* ===== INLINED: chatgpt.js ===== */
-const ChatGPTProvider = {
-  name: "chatgpt",
 
-  async startMessage(tabId, requestId, messages) {
-    if (!Number.isInteger(tabId)) {
-      throw new Error("Invalid ChatGPT tab ID.");
-    }
-
-    if (!requestId) {
-      throw new Error("Missing ChatGPT request ID.");
-    }
-
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["providers/chatgpt-content.js"],
-    });
-
-    const response = await chrome.tabs.sendMessage(
-      tabId,
-      {
-        type: "pair_chatgpt_start",
-        requestId,
-        messages,
-      }
-    );
-
-    if (!response || response.ok !== true) {
-      throw new Error(
-        response?.error ||
-        "ChatGPT content script could not start the request."
-      );
-    }
-
-    return true;
-  },
-};
-
-
-/* ===== INLINED: providers/claude.js ===== */
-
-const ClaudeProvider = {
-  name: "claude",
-
-  async sendMessage(tabId, messages) {
-    console.log(
-      "[ClaudeProvider] Sending request to tab:",
-      tabId
-    );
-
-    if (
-      !Array.isArray(messages) ||
-      messages.length === 0
-    ) {
-      throw new Error(
-        "ClaudeProvider received empty messages."
-      );
-    }
-
-    const results =
-      await chrome.scripting.executeScript({
-        target: {
-          tabId,
-        },
-
-        func: async (incomingMessages) => {
-          const sleep = (ms) =>
-            new Promise((resolve) => {
-              setTimeout(resolve, ms);
-            });
-
-          const normalizeText = (value) => {
-            if (!value) {
-              return "";
-            }
-
-            return String(value)
-              .replace(/\u00a0/g, " ")
-              .replace(/\r/g, "")
-              .replace(
-                /[ \t]+\n/g,
-                "\n"
-              )
-              .replace(
-                /\n[ \t]+/g,
-                "\n"
-              )
-              .trim();
-          };
-
-          const getText = (element) => {
-            if (!element) {
-              return "";
-            }
-
-            return normalizeText(
-              element.innerText ||
-              element.textContent ||
-              ""
-            );
-          };
-
-          const isVisible = (element) => {
-            if (!element) {
-              return false;
-            }
-
-            const style =
-              window.getComputedStyle(
-                element
-              );
-
-            if (
-              style.display === "none" ||
-              style.visibility === "hidden" ||
-              style.opacity === "0"
-            ) {
-              return false;
-            }
-
-            const rect =
-              element.getBoundingClientRect();
-
-            return (
-              rect.width > 0 &&
-              rect.height > 0
-            );
-          };
-
-          const isIgnoredText = (text) => {
-            const value =
-              normalizeText(text);
-
-            if (!value) {
-              return true;
-            }
-
-            const exactIgnored = new Set([
-              "just now",
-              "Write a message…",
-              "Write a message...",
-              "Send",
-              "Send Message",
-              "New",
-              "Projects",
-              "Artifacts",
-              "Code",
-              "Customize",
-              "Share",
-              "Upgrade",
-              "Copy",
-              "Retry",
-              "Regenerate",
-              "Like",
-              "Dislike",
-              "Crystallizing",
-              "Thinking",
-              "Claude is thinking",
-              "Claude is thinking…",
-              "Claude is thinking...",
-              "Working",
-              "Generating",
-              "Processing",
-              "Loading",
-            ]);
-
-            if (
-              exactIgnored.has(value)
-            ) {
-              return true;
-            }
-
-            const lower =
-              value.toLowerCase();
-
-            const ignoredPatterns = [
-              /^just now$/i,
-              /^\d+\s*(seconds?|minutes?|hours?)\s*ago$/i,
-              /^free plan$/i,
-              /^upgrade$/i,
-              /^share$/i,
-              /^copy$/i,
-              /^retry$/i,
-              /^regenerate$/i,
-              /^like$/i,
-              /^dislike$/i,
-              /^crystallizing$/i,
-              /^thinking$/i,
-              /^claude is thinking(?:…|\.\.\.)?$/i,
-              /^working$/i,
-              /^generating$/i,
-              /^processing$/i,
-              /^loading$/i,
-            ];
-
-            for (
-              const pattern of
-                ignoredPatterns
-            ) {
-              if (
-                pattern.test(value)
-              ) {
-                return true;
-              }
-            }
-
-            if (
-              value.length < 2
-            ) {
-              return true;
-            }
-
-            if (
-              lower === "new chat" ||
-              lower === "settings" ||
-              lower === "projects"
-            ) {
-              return true;
-            }
-
-            return false;
-          };
-
-          const findComposer = () => {
-            const selectors = [
-              "textarea",
-              '[contenteditable="true"]',
-              '[role="textbox"]',
-            ];
-
-            for (
-              const selector of selectors
-            ) {
-              const elements =
-                Array.from(
-                  document.querySelectorAll(
-                    selector
-                  )
-                );
-
-              const visible =
-                elements.find(
-                  (element) =>
-                    isVisible(element)
-                );
-
-              if (visible) {
-                return visible;
-              }
-            }
-
-            return null;
-          };
-
-          const findSendButton = () => {
-            const buttons =
-              Array.from(
-                document.querySelectorAll(
-                  "button"
-                )
-              );
-
-            const candidates =
-              buttons.filter(
-                (button) =>
-                  isVisible(button)
-              );
-
-            for (
-              const button of candidates
-            ) {
-              const text =
-                getText(button)
-                  .toLowerCase();
-
-              const aria =
-                (
-                  button.getAttribute(
-                    "aria-label"
-                  ) || ""
-                ).toLowerCase();
-
-              const title =
-                (
-                  button.getAttribute(
-                    "title"
-                  ) || ""
-                ).toLowerCase();
-
-              if (
-                text === "send" ||
-                aria.includes("send") ||
-                title.includes("send")
-              ) {
-                return button;
-              }
-            }
-
-            return null;
-          };
-
-          const setComposerValue = (
-            composer,
-            value
-          ) => {
-            if (
-              composer instanceof
-              HTMLTextAreaElement
-            ) {
-              const setter =
-                Object.getOwnPropertyDescriptor(
-                  HTMLTextAreaElement.prototype,
-                  "value"
-                )?.set;
-
-              if (setter) {
-                setter.call(
-                  composer,
-                  value
-                );
-              } else {
-                composer.value =
-                  value;
-              }
-
-              composer.dispatchEvent(
-                new Event(
-                  "input",
-                  {
-                    bubbles: true,
-                  }
-                )
-              );
-
-              composer.dispatchEvent(
-                new Event(
-                  "change",
-                  {
-                    bubbles: true,
-                  }
-                )
-              );
-
-              return;
-            }
-
-            composer.focus();
-
-            document.execCommand(
-              "selectAll",
-              false,
-              null
-            );
-
-            document.execCommand(
-              "insertText",
-              false,
-              value
-            );
-
-            composer.dispatchEvent(
-              new InputEvent(
-                "input",
-                {
-                  bubbles: true,
-                  inputType:
-                    "insertText",
-                  data: value,
-                }
-              )
-            );
-          };
-
-          const getMessageText =
-            () => {
-              const selectors = [
-                '[data-testid*="message"]',
-                '[data-testid*="assistant"]',
-                '[class*="message"]',
-                '[class*="response"]',
-                '[class*="prose"]',
-              ];
-
-              const candidates = [];
-
-              for (
-                const selector of
-                  selectors
-              ) {
-                for (
-                  const element of
-                    document.querySelectorAll(
-                      selector
-                    )
-                ) {
-                  if (
-                    !isVisible(
-                      element
-                    )
-                  ) {
-                    continue;
-                  }
-
-                  const text =
-                    getText(
-                      element
-                    );
-
-                  if (
-                    !text ||
-                    isIgnoredText(
-                      text
-                    )
-                  ) {
-                    continue;
-                  }
-
-                  candidates.push({
-                    element,
-                    text,
-                  });
-                }
-              }
-
-              if (
-                candidates.length === 0
-              ) {
-                return "";
-              }
-
-              candidates.sort(
-                (a, b) =>
-                  b.text.length -
-                  a.text.length
-              );
-
-              return candidates[0]
-                .text;
-            };
-
-          const beforeText =
-            getMessageText();
-
-          const composer =
-            findComposer();
-
-          if (!composer) {
-            throw new Error(
-              "Claude message composer was not found."
-            );
-          }
-
-          const prompt =
-            incomingMessages
-              .map(
-                (message) =>
-                  message?.content || ""
-              )
-              .filter(Boolean)
-              .join("\n\n");
-
-          if (!prompt.trim()) {
-            throw new Error(
-              "Claude prompt is empty."
-            );
-          }
-
-          setComposerValue(
-            composer,
-            prompt
-          );
-
-          await sleep(100);
-
-          const sendButton =
-            findSendButton();
-
-          if (sendButton) {
-            sendButton.click();
-          } else {
-            composer.focus();
-
-            composer.dispatchEvent(
-              new KeyboardEvent(
-                "keydown",
-                {
-                  key: "Enter",
-                  code: "Enter",
-                  keyCode: 13,
-                  which: 13,
-                  bubbles: true,
-                }
-              )
-            );
-          }
-
-          let lastText =
-            beforeText;
-
-          let stableCount = 0;
-
-          const startTime =
-            Date.now();
-
-          while (true) {
-            await sleep(250);
-
-            const currentText =
-              getMessageText();
-
-            if (
-              currentText &&
-              currentText !==
-                beforeText
-            ) {
-              if (
-                currentText ===
-                lastText
-              ) {
-                stableCount += 1;
-              } else {
-                stableCount = 0;
-                lastText =
-                  currentText;
-              }
-
-              if (
-                stableCount >= 6
-              ) {
-                await sleep(500);
-
-                const verifiedText =
-                  getMessageText();
-
-                if (
-                  verifiedText ===
-                  currentText
-                ) {
-                  return verifiedText;
-                }
-              }
-            }
-
-            /*
-             * This is NOT a generation timeout.
-             *
-             * It only prevents the page script from running forever
-             * if Claude's page becomes completely unusable.
-             *
-             * The normal generation flow is based on completion/stability.
-             */
-            if (
-              Date.now() -
-                startTime >
-              30 * 60 * 1000
-            ) {
-              throw new Error(
-                "Claude response did not complete."
-              );
-            }
-          }
-        },
-        args: [messages],
-      });
-
-    const result =
-      results?.[0]?.result;
-
-    if (
-      typeof result !==
-        "string" ||
-      !result.trim()
-    ) {
-      throw new Error(
-        "Claude returned an empty response."
-      );
-    }
-
-    return result.trim();
-  },
-};
-
-
-/* ===== INLINED: providers/gemini.js ===== */
-
-const GeminiProvider = {
-  name: "gemini",
-
-  async sendMessage(tabId, messages) {
-    if (!Number.isInteger(tabId)) {
-      throw new Error(
-        "Invalid Gemini tab ID."
-      );
-    }
-
-    if (
-      !Array.isArray(messages) ||
-      messages.length === 0
-    ) {
-      throw new Error(
-        "GeminiProvider received empty messages."
-      );
-    }
-
-    const results =
-      await chrome.scripting.executeScript({
-        target: {
-          tabId,
-        },
-
-        func: async (incomingMessages) => {
-          const sleep = (ms) =>
-            new Promise((resolve) => {
-              setTimeout(resolve, ms);
-            });
-
-          const normalizeText = (value) => {
-            if (!value) {
-              return "";
-            }
-
-            return String(value)
-              .replace(/\u00a0/g, " ")
-              .replace(/\r/g, "")
-              .replace(
-                /[ \t]+\n/g,
-                "\n"
-              )
-              .replace(
-                /\n[ \t]+/g,
-                "\n"
-              )
-              .trim();
-          };
-
-          const getText = (element) => {
-            if (!element) {
-              return "";
-            }
-
-            return normalizeText(
-              element.innerText ||
-              element.textContent ||
-              ""
-            );
-          };
-
-          const isVisible = (element) => {
-            if (!element) {
-              return false;
-            }
-
-            const style =
-              window.getComputedStyle(
-                element
-              );
-
-            if (
-              style.display === "none" ||
-              style.visibility === "hidden" ||
-              style.opacity === "0"
-            ) {
-              return false;
-            }
-
-            const rect =
-              element.getBoundingClientRect();
-
-            return (
-              rect.width > 0 &&
-              rect.height > 0
-            );
-          };
-
-          const isIgnoredText = (text) => {
-            const value =
-              normalizeText(text);
-
-            if (!value) {
-              return true;
-            }
-
-            const ignored = [
-              "Thinking",
-              "Generating",
-              "Loading",
-              "Send",
-              "Copy",
-              "Retry",
-              "Share",
-            ];
-
-            return (
-              ignored.includes(value) ||
-              value.length < 2
-            );
-          };
-
-          const findComposer = () => {
-            const selectors = [
-              "textarea",
-              '[contenteditable="true"]',
-              '[role="textbox"]',
-            ];
-
-            for (
-              const selector of selectors
-            ) {
-              const elements =
-                Array.from(
-                  document.querySelectorAll(
-                    selector
-                  )
-                );
-
-              const visible =
-                elements.find(
-                  (element) =>
-                    isVisible(element)
-                );
-
-              if (visible) {
-                return visible;
-              }
-            }
-
-            return null;
-          };
-
-          const findSendButton = () => {
-            const buttons =
-              Array.from(
-                document.querySelectorAll(
-                  "button"
-                )
-              );
-
-            for (
-              const button of buttons
-            ) {
-              if (
-                !isVisible(button)
-              ) {
-                continue;
-              }
-
-              const text =
-                getText(button)
-                  .toLowerCase();
-
-              const aria =
-                (
-                  button.getAttribute(
-                    "aria-label"
-                  ) || ""
-                ).toLowerCase();
-
-              const title =
-                (
-                  button.getAttribute(
-                    "title"
-                  ) || ""
-                ).toLowerCase();
-
-              if (
-                text === "send" ||
-                aria.includes("send") ||
-                title.includes("send")
-              ) {
-                return button;
-              }
-            }
-
-            return null;
-          };
-
-          const setComposerValue = (
-            composer,
-            value
-          ) => {
-            if (
-              composer instanceof
-              HTMLTextAreaElement
-            ) {
-              const setter =
-                Object.getOwnPropertyDescriptor(
-                  HTMLTextAreaElement.prototype,
-                  "value"
-                )?.set;
-
-              if (setter) {
-                setter.call(
-                  composer,
-                  value
-                );
-              } else {
-                composer.value =
-                  value;
-              }
-
-              composer.dispatchEvent(
-                new Event(
-                  "input",
-                  {
-                    bubbles: true,
-                  }
-                )
-              );
-
-              composer.dispatchEvent(
-                new Event(
-                  "change",
-                  {
-                    bubbles: true,
-                  }
-                )
-              );
-
-              return;
-            }
-
-            composer.focus();
-
-            document.execCommand(
-              "selectAll",
-              false,
-              null
-            );
-
-            document.execCommand(
-              "insertText",
-              false,
-              value
-            );
-
-            composer.dispatchEvent(
-              new InputEvent(
-                "input",
-                {
-                  bubbles: true,
-                  inputType:
-                    "insertText",
-                  data: value,
-                }
-              )
-            );
-          };
-
-          const getCandidateResponse =
-            () => {
-              const selectors = [
-                '[data-message-author-role="model"]',
-                '[data-message-author-role="assistant"]',
-                ".model-response",
-                ".markdown",
-                '[class*="model"]',
-                '[class*="response"]',
-              ];
-
-              const candidates = [];
-
-              for (
-                const selector of
-                  selectors
-              ) {
-                for (
-                  const element of
-                    document.querySelectorAll(
-                      selector
-                    )
-                ) {
-                  if (
-                    !isVisible(
-                      element
-                    )
-                  ) {
-                    continue;
-                  }
-
-                  const text =
-                    getText(
-                      element
-                    );
-
-                  if (
-                    !text ||
-                    isIgnoredText(
-                      text
-                    )
-                  ) {
-                    continue;
-                  }
-
-                  candidates.push({
-                    element,
-                    text,
-                  });
-                }
-              }
-
-              candidates.sort(
-                (a, b) =>
-                  b.text.length -
-                  a.text.length
-              );
-
-              return (
-                candidates[0]?.text ||
-                ""
-              );
-            };
-
-          const beforeText =
-            getCandidateResponse();
-
-          const composer =
-            findComposer();
-
-          if (!composer) {
-            throw new Error(
-              "Gemini message composer was not found."
-            );
-          }
-
-          const prompt =
-            incomingMessages
-              .map(
-                (message) =>
-                  message?.content || ""
-              )
-              .filter(Boolean)
-              .join("\n\n");
-
-          if (!prompt.trim()) {
-            throw new Error(
-              "Gemini prompt is empty."
-            );
-          }
-
-          setComposerValue(
-            composer,
-            prompt
-          );
-
-          await sleep(100);
-
-          const sendButton =
-            findSendButton();
-
-          if (sendButton) {
-            sendButton.click();
-          } else {
-            composer.focus();
-
-            composer.dispatchEvent(
-              new KeyboardEvent(
-                "keydown",
-                {
-                  key: "Enter",
-                  code: "Enter",
-                  keyCode: 13,
-                  which: 13,
-                  bubbles: true,
-                }
-              )
-            );
-          }
-
-          let lastText =
-            beforeText;
-
-          let stableCount = 0;
-
-          while (true) {
-            await sleep(250);
-
-            const currentText =
-              getCandidateResponse();
-
-            if (
-              currentText &&
-              currentText !==
-                beforeText
-            ) {
-              if (
-                currentText ===
-                lastText
-              ) {
-                stableCount += 1;
-              } else {
-                stableCount = 0;
-                lastText =
-                  currentText;
-              }
-
-              if (
-                stableCount >= 6
-              ) {
-                await sleep(500);
-
-                const verifiedText =
-                  getCandidateResponse();
-
-                if (
-                  verifiedText ===
-                  currentText
-                ) {
-                  return verifiedText;
-                }
-              }
-            }
-          }
-        },
-        args: [messages],
-      });
-
-    const result =
-      results?.[0]?.result;
-
-    if (
-      typeof result !==
-        "string" ||
-      !result.trim()
-    ) {
-      throw new Error(
-        "Gemini returned an empty response."
-      );
-    }
-
-    return result.trim();
-  },
-};
+/* ================================================================
+ * PROVIDERS
+ * ================================================================ */
+
+importScripts(
+  "providers/chatgpt.js",
+  "providers/claude.js",
+  "providers/gemini.js"
+);
 
 
 /* ================================================================
@@ -1059,14 +37,18 @@ const HTTP_URL =
 const WATCHDOG_ALARM =
   "pair_bridge_watchdog";
 
-const RECONNECT_DELAY_MS = 2000;
+const RECONNECT_DELAY_MS =
+  2000;
 
 const ENABLED_KEY =
   "pairEnabled";
 
 let socket = null;
+
 let reconnectTimer = null;
-let bridgeCheckInProgress = false;
+
+let bridgeCheckInProgress =
+  false;
 
 let activeProvider =
   "chatgpt";
@@ -1216,13 +198,19 @@ async function getProviderTabs() {
 
     result[provider].push({
       tabId: tab.id,
-      windowId: tab.windowId,
+
+      windowId:
+        tab.windowId,
+
       title:
         tab.title || "",
+
       url:
         tab.url || "",
+
       active:
         Boolean(tab.active),
+
       usable:
         isProviderTabUsable(
           provider,
@@ -1454,19 +442,6 @@ function scheduleReconnect() {
 /*
  * Check whether the Python bridge is actually running BEFORE creating
  * a WebSocket.
- *
- * This is the important fix.
- *
- * If Python has called client.close(), port 8765 is closed.
- * Instead of doing:
- *
- *     new WebSocket(...)
- *
- * and producing:
- *
- *     ERR_CONNECTION_REFUSED
- *
- * we simply wait and retry later.
  */
 async function isBridgeReachable() {
   if (
@@ -1508,13 +483,6 @@ async function isBridgeReachable() {
       );
     }
   } catch (_) {
-    /*
-     * Bridge is not running.
-     *
-     * Deliberately do NOT log an error here.
-     *
-     * This is normal when the Python client has been closed.
-     */
     return false;
   } finally {
     bridgeCheckInProgress =
@@ -1602,14 +570,7 @@ async function connectToBridge() {
   const reachable =
     await isBridgeReachable();
 
-  if (
-    !reachable
-  ) {
-    /*
-     * Do not report this as an error.
-     *
-     * The bridge may simply not be running yet.
-     */
+  if (!reachable) {
     lastConnectionError =
       null;
 
@@ -1679,7 +640,8 @@ async function connectToBridge() {
           "PAIR",
 
         version:
-          chrome.runtime.getManifest()
+          chrome.runtime
+            .getManifest()
             .version,
       });
     }
@@ -1718,8 +680,8 @@ async function connectToBridge() {
       /*
        * IMPORTANT:
        *
-       * Only the currently active socket is allowed to modify
-       * the global socket state.
+       * Only the currently active socket is allowed
+       * to modify the global socket state.
        */
       if (
         socket ===
@@ -1731,12 +693,6 @@ async function connectToBridge() {
         if (
           pairEnabled
         ) {
-          /*
-           * Don't display connection errors for a normal
-           * bridge shutdown/restart.
-           *
-           * The watchdog will reconnect when the bridge returns.
-           */
           lastConnectionError =
             null;
 
@@ -1751,10 +707,7 @@ async function connectToBridge() {
     "error",
     () => {
       /*
-       * WebSocket errors are intentionally not surfaced as
-       * noisy extension errors.
-       *
-       * The close event will schedule the reconnect.
+       * The close event handles reconnecting.
        */
       if (
         socket ===
@@ -1937,11 +890,12 @@ async function handleChatRequest(
 
 
     /*
-     * ChatGPT uses a content script because the response
-     * is observed continuously from the page.
+     * ChatGPT now uses the single:
      *
-     * The content script itself waits until the response
-     * is completely generated before sending pair_provider_result.
+     *     providers/chatgpt.js
+     *
+     * file. That file contains both the provider
+     * wrapper and the injected page-side logic.
      */
     if (
       provider === "chatgpt" &&
@@ -1959,7 +913,7 @@ async function handleChatRequest(
 
 
     /*
-     * Claude/Gemini providers return only after their
+     * Claude/Gemini return only after their
      * response is complete.
      */
     const content =

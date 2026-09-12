@@ -1,83 +1,37 @@
-/*
- * PAIR - ChatGPT Provider
- *
- * This single file serves BOTH purposes:
- *
- * 1. Service-worker side:
- *      ChatGPTProvider.startMessage(...)
- *
- * 2. Page/content-script side:
- *      ChatGPT DOM automation
- *
- * This allows PAIR to keep ChatGPT in exactly one file.
- */
-
-const ChatGPTProvider = {
+var ChatGPTProvider = globalThis.ChatGPTProvider || {
   name: "chatgpt",
 
-  async startMessage(
-    tabId,
-    requestId,
-    messages
-  ) {
+  async startMessage(tabId, requestId, messages) {
     if (!Number.isInteger(tabId)) {
-      throw new Error(
-        "Invalid ChatGPT tab ID."
-      );
+      throw new Error("Invalid ChatGPT tab ID.");
     }
 
     if (!requestId) {
-      throw new Error(
-        "Missing ChatGPT request ID."
-      );
+      throw new Error("Missing ChatGPT request ID.");
     }
 
-    if (
-      !Array.isArray(messages) ||
-      messages.length === 0
-    ) {
-      throw new Error(
-        "ChatGPT messages are empty."
-      );
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error("ChatGPT messages are empty.");
     }
 
-    /*
-     * Execute THIS SAME chatgpt.js file inside
-     * the ChatGPT page.
-     *
-     * The content-script section below detects
-     * that it is running inside a normal page.
-     */
     await chrome.scripting.executeScript({
-      target: {
-        tabId,
-      },
-
-      files: [
-        "chatgpt.js",
-      ],
+      target: { tabId },
+      files: ["providers/chatgpt.js"],
     });
 
-    const response =
-      await chrome.tabs.sendMessage(
-        tabId,
-        {
-          type:
-            "pair_chatgpt_start",
+    const response = await chrome.tabs.sendMessage(
+      tabId,
+      {
+        type: "pair_chatgpt_start",
+        requestId,
+        messages,
+      }
+    );
 
-          requestId,
-
-          messages,
-        }
-      );
-
-    if (
-      !response ||
-      response.ok !== true
-    ) {
+    if (!response || response.ok !== true) {
       throw new Error(
         response?.error ||
-          "ChatGPT content script could not start the request."
+        "ChatGPT content script could not start the request."
       );
     }
 
@@ -88,47 +42,31 @@ const ChatGPTProvider = {
 
 /* ================================================================
  * CHATGPT PAGE / CONTENT SCRIPT
- *
- * Everything below runs inside chatgpt.com.
  * ================================================================ */
 
 (() => {
   /*
-   * The same file is also loaded by the extension service worker.
-   *
-   * The service worker does NOT have a document.
-   *
-   * Therefore only execute this section when
-   * the file is injected into a normal web page.
+   * The service worker has no document.
+   * This section only runs when this file is injected
+   * into the ChatGPT browser tab.
    */
-  if (
-    typeof document ===
-    "undefined"
-  ) {
+  if (typeof document === "undefined") {
     return;
   }
 
 
   /*
-   * Prevent duplicate initialization.
-   *
-   * ChatGPT requests can cause the same file to be
-   * injected multiple times.
+   * Prevent duplicate initialization when the same file
+   * is injected more than once.
    */
-  if (
-    globalThis
-      .__PAIR_CHATGPT_CONTENT_INITIALIZED__
-  ) {
+  if (globalThis.__PAIR_CHATGPT_CONTENT_INITIALIZED__) {
     return;
   }
 
-  globalThis
-    .__PAIR_CHATGPT_CONTENT_INITIALIZED__ =
-    true;
+  globalThis.__PAIR_CHATGPT_CONTENT_INITIALIZED__ = true;
 
 
-  const activeRequests =
-    new Map();
+  const activeRequests = new Map();
 
 
   /* ==============================================================
@@ -136,84 +74,52 @@ const ChatGPTProvider = {
    * ============================================================== */
 
   chrome.runtime.onMessage.addListener(
-    (
-      message,
-      sender,
-      sendResponse
-    ) => {
-
-      if (
-        message?.type !==
-        "pair_chatgpt_start"
-      ) {
+    (message, sender, sendResponse) => {
+      if (message?.type !== "pair_chatgpt_start") {
         return false;
       }
 
-      const requestId =
-        message.requestId;
+      const requestId = message.requestId;
 
       if (!requestId) {
         sendResponse({
           ok: false,
-
-          error:
-            "Missing ChatGPT request ID.",
+          error: "Missing ChatGPT request ID.",
         });
 
         return false;
       }
 
-
-      /*
-       * Prevent duplicate request execution.
-       */
-      if (
-        activeRequests.has(
-          requestId
-        )
-      ) {
+      if (activeRequests.has(requestId)) {
         sendResponse({
           ok: true,
-
           duplicate: true,
         });
 
         return false;
       }
 
-
       const request = {
         requestId,
 
-        messages:
-          Array.isArray(
-            message.messages
-          )
-            ? message.messages
-            : [],
+        messages: Array.isArray(message.messages)
+          ? message.messages
+          : [],
 
-        baseline:
-          getAssistantMessages(),
+        baseline: getAssistantMessages(),
 
-        observer:
-          null,
+        observer: null,
 
-        settleTimer:
-          null,
+        settleTimer: null,
 
-        submitted:
-          false,
+        submitted: false,
 
-        resolved:
-          false,
+        resolved: false,
 
-        lastObservedText:
-          "",
+        lastObservedText: "",
 
-        text:
-          "",
+        text: "",
       };
-
 
       activeRequests.set(
         requestId,
@@ -222,19 +128,13 @@ const ChatGPTProvider = {
 
 
       /*
-       * Watch the entire ChatGPT DOM.
-       *
-       * ChatGPT streams the response by continuously
-       * changing DOM nodes.
+       * Watch the ChatGPT DOM while the response
+       * is being generated.
        */
       request.observer =
-        new MutationObserver(
-          () => {
-            processRequest(
-              request
-            );
-          }
-        );
+        new MutationObserver(() => {
+          processRequest(request);
+        });
 
 
       request.observer.observe(
@@ -250,20 +150,15 @@ const ChatGPTProvider = {
 
           attributeFilter: [
             "data-is-streaming",
-
             "aria-busy",
-
             "disabled",
-
             "class",
           ],
         }
       );
 
 
-      startRequest(
-        request
-      ).catch(
+      startRequest(request).catch(
         (error) => {
           failRequest(
             request,
@@ -286,18 +181,13 @@ const ChatGPTProvider = {
    * START REQUEST
    * ============================================================== */
 
-  async function startRequest(
-    request
-  ) {
+  async function startRequest(request) {
     const lastUserMessage =
-      [
-        ...request.messages,
-      ]
+      [...request.messages]
         .reverse()
         .find(
           (message) =>
-            message?.role ===
-            "user"
+            message?.role === "user"
         );
 
 
@@ -310,8 +200,7 @@ const ChatGPTProvider = {
 
     const text =
       String(
-        lastUserMessage.content ||
-          ""
+        lastUserMessage.content || ""
       );
 
 
@@ -322,48 +211,33 @@ const ChatGPTProvider = {
     }
 
 
-    request.text =
-      text;
+    request.text = text;
 
 
-    /*
-     * Start the submission process.
-     */
-    processRequest(
-      request
-    );
+    processRequest(request);
   }
 
 
   /* ==============================================================
-   * REQUEST PROCESSING
+   * PROCESS REQUEST
    * ============================================================== */
 
-  function processRequest(
-    request
-  ) {
-    if (
-      request.resolved
-    ) {
+  function processRequest(request) {
+    if (request.resolved) {
       return;
     }
 
 
     /*
-     * STEP 1
-     *
-     * Find the ChatGPT composer and submit the prompt.
+     * Submit the prompt.
      */
-    if (
-      !request.submitted
-    ) {
+    if (!request.submitted) {
       const composer =
         findComposer();
 
 
       if (composer) {
-        request.submitted =
-          true;
+        request.submitted = true;
 
 
         setComposerValue(
@@ -373,36 +247,28 @@ const ChatGPTProvider = {
 
 
         /*
-         * Give React/ChatGPT a chance to process
-         * the input event before clicking send.
+         * Allow ChatGPT/React to process the input
+         * before attempting to send.
          */
-        queueMicrotask(
-          () => {
-            if (
-              request.resolved
-            ) {
-              return;
-            }
-
-
-            const sendButton =
-              findSendButton();
-
-
-            if (
-              sendButton &&
-              !isDisabled(
-                sendButton
-              )
-            ) {
-              sendButton.click();
-            } else {
-              sendEnter(
-                composer
-              );
-            }
+        queueMicrotask(() => {
+          if (request.resolved) {
+            return;
           }
-        );
+
+
+          const sendButton =
+            findSendButton();
+
+
+          if (
+            sendButton &&
+            !isDisabled(sendButton)
+          ) {
+            sendButton.click();
+          } else {
+            sendEnter(composer);
+          }
+        });
       }
 
 
@@ -411,9 +277,8 @@ const ChatGPTProvider = {
 
 
     /*
-     * STEP 2
-     *
-     * Look for a new assistant message.
+     * Find assistant messages created after
+     * the request was submitted.
      */
     const current =
       getAssistantMessages();
@@ -428,21 +293,11 @@ const ChatGPTProvider = {
       );
 
 
-    if (
-      newMessages.length ===
-      0
-    ) {
+    if (newMessages.length === 0) {
       return;
     }
 
 
-    /*
-     * ChatGPT can expose multiple assistant
-     * DOM elements while rendering.
-     *
-     * The newest one is the response we're
-     * interested in.
-     */
     const latest =
       newMessages[
         newMessages.length - 1
@@ -450,9 +305,7 @@ const ChatGPTProvider = {
 
 
     const text =
-      extractText(
-        latest
-      );
+      extractText(latest);
 
 
     if (!text) {
@@ -461,34 +314,26 @@ const ChatGPTProvider = {
 
 
     /*
-     * STEP 3
+     * IMPORTANT:
      *
-     * If ChatGPT is still generating, DO NOT return.
+     * Do not return anything while ChatGPT is
+     * still generating.
      */
-    if (
-      isStillGenerating(
-        latest
-      )
-    ) {
+    if (isStillGenerating(latest)) {
       request.lastObservedText =
         text;
 
-      clearSettleTimer(
-        request
-      );
+      clearSettleTimer(request);
 
       return;
     }
 
 
     /*
-     * STEP 4
+     * ChatGPT may expose a partial response before
+     * the generation state changes.
      *
-     * ChatGPT can temporarily expose a partial
-     * assistant message.
-     *
-     * Therefore we require the text to remain
-     * unchanged before resolving.
+     * Wait until the text becomes stable.
      */
     if (
       request.lastObservedText !==
@@ -497,23 +342,16 @@ const ChatGPTProvider = {
       request.lastObservedText =
         text;
 
-      scheduleSettleCheck(
-        request
-      );
+      scheduleSettleCheck(request);
 
       return;
     }
 
 
     /*
-     * STEP 5
-     *
-     * Run another verification after the
-     * settling period.
+     * Perform another verification.
      */
-    scheduleSettleCheck(
-      request
-    );
+    scheduleSettleCheck(request);
   }
 
 
@@ -524,16 +362,13 @@ const ChatGPTProvider = {
   /*
    * This is NOT a generation timeout.
    *
-   * It is only a debounce period used to verify
-   * that the response has stopped changing.
+   * It is only the amount of time we wait after
+   * the response appears stable before verifying it.
    */
-  const RESPONSE_SETTLE_MS =
-    1500;
+  const RESPONSE_SETTLE_MS = 1500;
 
 
-  function clearSettleTimer(
-    request
-  ) {
+  function clearSettleTimer(request) {
     if (
       request.settleTimer !==
       null
@@ -548,9 +383,7 @@ const ChatGPTProvider = {
   }
 
 
-  function scheduleSettleCheck(
-    request
-  ) {
+  function scheduleSettleCheck(request) {
     if (
       request.resolved ||
       request.settleTimer !==
@@ -561,108 +394,95 @@ const ChatGPTProvider = {
 
 
     request.settleTimer =
-      setTimeout(
-        () => {
-          request.settleTimer =
-            null;
+      setTimeout(() => {
+        request.settleTimer =
+          null;
 
 
-          if (
-            request.resolved
-          ) {
-            return;
-          }
+        if (request.resolved) {
+          return;
+        }
 
 
-          const current =
-            getAssistantMessages();
+        const current =
+          getAssistantMessages();
 
 
-          const newMessages =
-            current.filter(
-              (element) =>
-                !request.baseline.includes(
-                  element
-                )
-            );
-
-
-          if (
-            newMessages.length ===
-            0
-          ) {
-            return;
-          }
-
-
-          const latest =
-            newMessages[
-              newMessages.length -
-                1
-            ];
-
-
-          const text =
-            extractText(
-              latest
-            );
-
-
-          if (!text) {
-            return;
-          }
-
-
-          /*
-           * Generation has started again.
-           */
-          if (
-            isStillGenerating(
-              latest
-            )
-          ) {
-            request.lastObservedText =
-              text;
-
-            return;
-          }
-
-
-          /*
-           * Text changed during settling.
-           *
-           * Wait again.
-           */
-          if (
-            text !==
-            request.lastObservedText
-          ) {
-            request.lastObservedText =
-              text;
-
-            scheduleSettleCheck(
-              request
-            );
-
-            return;
-          }
-
-
-          /*
-           * FINAL VERIFICATION
-           *
-           * The DOM still contains the same text
-           * and ChatGPT no longer exposes an active
-           * generation signal.
-           */
-          resolveRequest(
-            request,
-            text
+        const newMessages =
+          current.filter(
+            (element) =>
+              !request.baseline.includes(
+                element
+              )
           );
-        },
 
-        RESPONSE_SETTLE_MS
-      );
+
+        if (newMessages.length === 0) {
+          return;
+        }
+
+
+        const latest =
+          newMessages[
+            newMessages.length - 1
+          ];
+
+
+        const text =
+          extractText(latest);
+
+
+        if (!text) {
+          return;
+        }
+
+
+        /*
+         * Generation is active again.
+         */
+        if (
+          isStillGenerating(
+            latest
+          )
+        ) {
+          request.lastObservedText =
+            text;
+
+          return;
+        }
+
+
+        /*
+         * Text changed during the settling
+         * period, so wait again.
+         */
+        if (
+          text !==
+          request.lastObservedText
+        ) {
+          request.lastObservedText =
+            text;
+
+          scheduleSettleCheck(
+            request
+          );
+
+          return;
+        }
+
+
+        /*
+         * FINAL VERIFICATION
+         *
+         * The response has remained unchanged
+         * and ChatGPT no longer reports active
+         * generation.
+         */
+        resolveRequest(
+          request,
+          text
+        );
+      }, RESPONSE_SETTLE_MS);
   }
 
 
@@ -708,9 +528,7 @@ const ChatGPTProvider = {
     ) {
       const setter =
         Object.getOwnPropertyDescriptor(
-          HTMLTextAreaElement
-            .prototype,
-
+          HTMLTextAreaElement.prototype,
           "value"
         )?.set;
 
@@ -725,9 +543,6 @@ const ChatGPTProvider = {
           text;
       }
     } else {
-      /*
-       * Contenteditable ChatGPT composer.
-       */
       element.textContent =
         text;
     }
@@ -791,12 +606,10 @@ const ChatGPTProvider = {
 
 
   /* ==============================================================
-   * ENTER SEND
+   * ENTER
    * ============================================================== */
 
-  function sendEnter(
-    element
-  ) {
+  function sendEnter(element) {
     const options = {
       key: "Enter",
 
@@ -850,13 +663,11 @@ const ChatGPTProvider = {
   }
 
 
-  function extractText(
-    element
-  ) {
+  function extractText(element) {
     return String(
       element?.innerText ||
-        element?.textContent ||
-        ""
+      element?.textContent ||
+      ""
     )
       .replace(
         /\u00a0/g,
@@ -870,11 +681,9 @@ const ChatGPTProvider = {
    * GENERATION DETECTION
    * ============================================================== */
 
-  function isStillGenerating(
-    element
-  ) {
+  function isStillGenerating(element) {
     /*
-     * Explicit streaming indicator.
+     * ChatGPT streaming indicator.
      */
     if (
       element.matches(
@@ -890,7 +699,7 @@ const ChatGPTProvider = {
 
 
     /*
-     * Busy indicator.
+     * aria-busy indicator.
      */
     if (
       element.matches(
@@ -906,8 +715,8 @@ const ChatGPTProvider = {
 
 
     /*
-     * ChatGPT normally exposes a Stop button
-     * while generation is active.
+     * ChatGPT exposes a Stop button while
+     * generation is active.
      */
     const stopButton =
       document.querySelector(
@@ -933,33 +742,26 @@ const ChatGPTProvider = {
 
     return Boolean(
       stopButton &&
-      isVisible(
-        stopButton
-      ) &&
-      !isDisabled(
-        stopButton
-      )
+      isVisible(stopButton) &&
+      !isDisabled(stopButton)
     );
   }
 
 
   /* ==============================================================
-   * RESOLVE
+   * RESOLVE REQUEST
    * ============================================================== */
 
   function resolveRequest(
     request,
     content
   ) {
-    if (
-      request.resolved
-    ) {
+    if (request.resolved) {
       return;
     }
 
 
-    request.resolved =
-      true;
+    request.resolved = true;
 
 
     clearSettleTimer(
@@ -980,7 +782,7 @@ const ChatGPTProvider = {
 
     /*
      * Send ONLY the complete response
-     * back to the PAIR background service worker.
+     * back to background.js.
      */
     chrome.runtime
       .sendMessage({
@@ -1009,15 +811,12 @@ const ChatGPTProvider = {
     request,
     error
   ) {
-    if (
-      request.resolved
-    ) {
+    if (request.resolved) {
       return;
     }
 
 
-    request.resolved =
-      true;
+    request.resolved = true;
 
 
     clearSettleTimer(
@@ -1061,9 +860,7 @@ const ChatGPTProvider = {
    * VISIBILITY
    * ============================================================== */
 
-  function isVisible(
-    element
-  ) {
+  function isVisible(element) {
     if (!element) {
       return false;
     }
@@ -1104,9 +901,7 @@ const ChatGPTProvider = {
    * DISABLED
    * ============================================================== */
 
-  function isDisabled(
-    element
-  ) {
+  function isDisabled(element) {
     return Boolean(
       !element ||
 
