@@ -335,7 +335,7 @@ class BridgeServer:
 
     def wait_for_extension(
         self,
-        timeout: float = 15.0,
+        timeout: float | None = None,
     ) -> bool:
         """
         Wait until the Chrome extension connects.
@@ -356,7 +356,7 @@ class BridgeServer:
         messages: list[dict[str, str]],
         model: str = "chat-window",
         stream: bool = False,
-        timeout: float = 120.0,
+        timeout: float | None = None,
     ) -> dict[str, Any]:
 
         if stream:
@@ -375,16 +375,19 @@ class BridgeServer:
             )
 
         # --------------------------------------------------------------
-        # PAIR connection is explicitly controlled by the extension.
-        # Do not auto-connect to individual providers and do not wait for
-        # the developer to enable PAIR after a request has already arrived.
+        # Wait for the PAIR extension.
+        #
+        # There is no fixed user-facing connection timeout. The call waits
+        # until the extension connects, then continues immediately.
         # --------------------------------------------------------------
 
         if not self.extension_connected:
-            raise ExtensionNotConnectedError(
-                "PAIR is not connected. Turn on the PAIR Chrome extension "
-                "before sending requests."
-            )
+            connected = self.wait_for_extension(timeout=None)
+
+            if not connected:
+                raise ExtensionNotConnectedError(
+                    "PAIR Chrome extension is not connected."
+                )
 
         # --------------------------------------------------------------
         # Only one browser chat operation at a time.
@@ -449,11 +452,16 @@ class BridgeServer:
                     timeout=5
                 )
 
+                # No default response timeout. This blocks until the
+                # provider sends its complete/final response.
                 result = future.result(
                     timeout=timeout
                 )
 
             except TimeoutError as exc:
+
+                if timeout is None:
+                    raise
 
                 raise ChatTimeoutError(
                     f"Timed out waiting for "
@@ -808,7 +816,7 @@ class BridgeServer:
                 messages=messages,
                 model=model,
                 stream=False,
-                timeout=120,
+                timeout=None,
             )
 
             return self._json_response(
