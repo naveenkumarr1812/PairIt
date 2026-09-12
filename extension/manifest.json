@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PAIR",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "PAIR connects your local development environment to supported AI browser sessions.",
   "permissions": [
     "tabs",
