@@ -1,161 +1,140 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>AI Window Bridge</title>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAIR</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
     body {
       width: 320px;
-      padding: 16px;
       margin: 0;
-
-      font-family:
-        Arial,
-        sans-serif;
+      padding: 18px;
+      box-sizing: border-box;
     }
 
     h2 {
-      margin-top: 0;
+      margin: 0;
+      font-size: 20px;
     }
 
-    .section {
-      margin-top: 16px;
+    .subtitle {
+      margin: 4px 0 16px;
+      opacity: 0.7;
+      font-size: 12px;
+      line-height: 1.4;
     }
 
-    .label {
+    .status {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(127, 127, 127, 0.12);
+      margin-bottom: 14px;
       font-size: 13px;
-      font-weight: bold;
-
-      margin-bottom: 8px;
+      line-height: 1.35;
     }
 
-    #status {
-      padding: 10px;
+    .status strong {
+      display: block;
+      margin-bottom: 2px;
+    }
 
-      border-radius: 6px;
+    button, select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(127, 127, 127, 0.35);
+      background: transparent;
+      color: inherit;
+      font: inherit;
+    }
 
-      background: #eee;
+    button {
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    button.primary {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      button.primary {
+        background: #fff;
+        color: #111;
+        border-color: #fff;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      opacity: 0.75;
+      margin-bottom: 5px;
+    }
+
+    .providers {
+      margin-top: 14px;
     }
 
     .provider {
       display: flex;
-      align-items: center;
-
-      gap: 8px;
-
-      padding: 10px;
-
-      margin-bottom: 6px;
-
-      border: 1px solid #ddd;
-
-      border-radius: 6px;
-
-      cursor: pointer;
-    }
-
-    .provider:hover {
-      background: #f5f5f5;
-    }
-
-    button {
-      width: 100%;
-
-      padding: 10px;
-
-      margin-top: 10px;
-
-      cursor: pointer;
-    }
-
-    #message {
-      margin-top: 10px;
-
+      justify-content: space-between;
+      padding: 7px 0;
       font-size: 12px;
+      border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+    }
 
-      color: #555;
+    .provider:last-child {
+      border-bottom: 0;
+    }
+
+    .open {
+      font-weight: 600;
+    }
+
+    .closed {
+      opacity: 0.55;
+    }
+
+    #error {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #d33;
     }
   </style>
 </head>
-
 <body>
-
-  <h2>
-    AI Window Bridge
-  </h2>
-
-
-  <div id="status">
-    Checking...
+  <h2>PAIR</h2>
+  <div class="subtitle">
+    Local development ↔ browser AI sessions
   </div>
 
-
-  <div class="section">
-
-    <div class="label">
-      Active Provider
-    </div>
-
-
-    <label class="provider">
-
-      <input
-        type="radio"
-        name="provider"
-        value="chatgpt"
-      >
-
-      ChatGPT
-
-    </label>
-
-
-    <label class="provider">
-
-      <input
-        type="radio"
-        name="provider"
-        value="claude"
-      >
-
-      Claude
-
-    </label>
-
-
-    <label class="provider">
-
-      <input
-        type="radio"
-        name="provider"
-        value="gemini"
-      >
-
-      Gemini
-
-    </label>
-
-
-    <button id="saveBtn">
-      Save Provider
-    </button>
-
+  <div class="status" id="status">
+    <strong>PAIR is off</strong>
+    Turn it on when you want your local development environment connected.
   </div>
 
+  <button id="toggle" class="primary">Turn PAIR on</button>
 
-  <div id="message"></div>
+  <label for="provider">Default provider</label>
+  <select id="provider">
+    <option value="chatgpt">ChatGPT</option>
+    <option value="claude">Claude</option>
+    <option value="gemini">Gemini</option>
+  </select>
 
+  <div class="providers" id="providers"></div>
+  <div id="error"></div>
 
   <script src="popup.js"></script>
-
 </body>
-
 </html>

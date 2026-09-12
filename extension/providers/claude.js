@@ -123,6 +123,15 @@ const ClaudeProvider = {
               "Regenerate",
               "Like",
               "Dislike",
+              "Crystallizing",
+              "Thinking",
+              "Claude is thinking",
+              "Claude is thinking…",
+              "Claude is thinking...",
+              "Working",
+              "Generating",
+              "Processing",
+              "Loading",
             ]);
 
             if (
@@ -145,6 +154,13 @@ const ClaudeProvider = {
               /^regenerate$/i,
               /^like$/i,
               /^dislike$/i,
+              /^crystallizing$/i,
+              /^thinking$/i,
+              /^claude is thinking(?:…|\.\.\.)?$/i,
+              /^working$/i,
+              /^generating$/i,
+              /^processing$/i,
+              /^loading$/i,
             ];
 
             for (

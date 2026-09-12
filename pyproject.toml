@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pair"
+version = "0.2.0"
+description = "PAIR local bridge for using authorized browser AI sessions from Python applications."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp>=3.9,<4",
+]
+
+[tool.setuptools.packages.find]
+include = ["pair*"]
