@@ -47,7 +47,9 @@ const ChatGPTProvider = {
   },
 };
 
+
 /* ===== INLINED: providers/claude.js ===== */
+
 const ClaudeProvider = {
   name: "claude",
 
@@ -73,11 +75,6 @@ const ClaudeProvider = {
         },
 
         func: async (incomingMessages) => {
-          /*
-           * Everything in this function runs inside claude.ai.
-           * Keep it self-contained.
-           */
-
           const sleep = (ms) =>
             new Promise((resolve) => {
               setTimeout(resolve, ms);
@@ -140,12 +137,6 @@ const ClaudeProvider = {
               rect.height > 0
             );
           };
-
-          /*
-           * ------------------------------------------------------
-           * UI TEXT THAT MUST NEVER BE RETURNED AS AI RESPONSE
-           * ------------------------------------------------------
-           */
 
           const isIgnoredText = (text) => {
             const value =
@@ -224,19 +215,11 @@ const ClaudeProvider = {
               }
             }
 
-            /*
-             * Don't return very short UI fragments.
-             */
-
             if (
               value.length < 2
             ) {
               return true;
             }
-
-            /*
-             * Some common navigation strings.
-             */
 
             if (
               lower === "new chat" ||
@@ -249,23 +232,15 @@ const ClaudeProvider = {
             return false;
           };
 
-          /*
-           * ------------------------------------------------------
-           * FIND COMPOSER
-           * ------------------------------------------------------
-           */
-
           const findComposer = () => {
             const selectors = [
               "textarea",
               '[contenteditable="true"]',
               '[role="textbox"]',
-              ".ProseMirror",
             ];
 
             for (
-              const selector of
-                selectors
+              const selector of selectors
             ) {
               const elements =
                 Array.from(
@@ -274,98 +249,21 @@ const ClaudeProvider = {
                   )
                 );
 
-              for (
-                const element of
-                  elements
-              ) {
-                if (
-                  !isVisible(element)
-                ) {
-                  continue;
-                }
+              const visible =
+                elements.find(
+                  (element) =>
+                    isVisible(element)
+                );
 
-                if (
-                  element.hasAttribute(
-                    "disabled"
-                  )
-                ) {
-                  continue;
-                }
-
-                if (
-                  element.getAttribute(
-                    "aria-disabled"
-                  ) === "true"
-                ) {
-                  continue;
-                }
-
-                return element;
+              if (visible) {
+                return visible;
               }
             }
 
             return null;
           };
 
-          /*
-           * ------------------------------------------------------
-           * FIND SEND BUTTON
-           * ------------------------------------------------------
-           */
-
           const findSendButton = () => {
-            const selectors = [
-              'button[aria-label="Send Message"]',
-              'button[aria-label="Send message"]',
-              'button[aria-label*="Send"]',
-              'button[aria-label*="send"]',
-              'button[data-testid*="send"]',
-              'button[type="submit"]',
-            ];
-
-            for (
-              const selector of
-                selectors
-            ) {
-              const elements =
-                Array.from(
-                  document.querySelectorAll(
-                    selector
-                  )
-                );
-
-              for (
-                const element of
-                  elements
-              ) {
-                if (
-                  !isVisible(element)
-                ) {
-                  continue;
-                }
-
-                if (
-                  element.disabled
-                ) {
-                  continue;
-                }
-
-                if (
-                  element.getAttribute(
-                    "aria-disabled"
-                  ) === "true"
-                ) {
-                  continue;
-                }
-
-                return element;
-              }
-            }
-
-            /*
-             * Fallback.
-             */
-
             const buttons =
               Array.from(
                 document.querySelectorAll(
@@ -373,47 +271,37 @@ const ClaudeProvider = {
                 )
               );
 
+            const candidates =
+              buttons.filter(
+                (button) =>
+                  isVisible(button)
+              );
+
             for (
-              const button of
-                buttons
+              const button of candidates
             ) {
-              if (
-                !isVisible(button)
-              ) {
-                continue;
-              }
-
-              if (
-                button.disabled
-              ) {
-                continue;
-              }
-
-              const aria =
-                normalizeText(
-                  button.getAttribute(
-                    "aria-label"
-                  )
-                );
-
-              const title =
-                normalizeText(
-                  button.getAttribute(
-                    "title"
-                  )
-                );
-
               const text =
-                getText(button);
-
-              const combined =
-                `${aria} ${title} ${text}`
+                getText(button)
                   .toLowerCase();
 
+              const aria =
+                (
+                  button.getAttribute(
+                    "aria-label"
+                  ) || ""
+                ).toLowerCase();
+
+              const title =
+                (
+                  button.getAttribute(
+                    "title"
+                  ) || ""
+                ).toLowerCase();
+
               if (
-                combined.includes(
-                  "send"
-                )
+                text === "send" ||
+                aria.includes("send") ||
+                title.includes("send")
               ) {
                 return button;
               }
@@ -422,476 +310,86 @@ const ClaudeProvider = {
             return null;
           };
 
-          /*
-           * ------------------------------------------------------
-           * SET COMPOSER TEXT
-           * ------------------------------------------------------
-           */
-
-          const setComposerText = (
+          const setComposerValue = (
             composer,
-            text
+            value
           ) => {
-            composer.focus();
-
-            /*
-             * TEXTAREA / INPUT
-             */
-
             if (
               composer instanceof
-                HTMLTextAreaElement ||
-              composer instanceof
-                HTMLInputElement
+              HTMLTextAreaElement
             ) {
-              const prototype =
-                Object.getPrototypeOf(
-                  composer
-                );
-
-              const descriptor =
+              const setter =
                 Object.getOwnPropertyDescriptor(
-                  prototype,
+                  HTMLTextAreaElement.prototype,
                   "value"
-                );
+                )?.set;
 
-              if (
-                descriptor &&
-                descriptor.set
-              ) {
-                descriptor.set.call(
+              if (setter) {
+                setter.call(
                   composer,
-                  text
+                  value
                 );
               } else {
                 composer.value =
-                  text;
+                  value;
               }
 
               composer.dispatchEvent(
-                new Event("input", {
-                  bubbles: true,
-                })
+                new Event(
+                  "input",
+                  {
+                    bubbles: true,
+                  }
+                )
               );
 
               composer.dispatchEvent(
-                new Event("change", {
-                  bubbles: true,
-                })
+                new Event(
+                  "change",
+                  {
+                    bubbles: true,
+                  }
+                )
               );
 
               return;
             }
 
-            /*
-             * CONTENTEDITABLE
-             */
-
-            const selection =
-              window.getSelection();
-
-            const range =
-              document.createRange();
-
-            range.selectNodeContents(
-              composer
-            );
-
-            selection.removeAllRanges();
-
-            selection.addRange(
-              range
-            );
+            composer.focus();
 
             document.execCommand(
-              "delete"
+              "selectAll",
+              false,
+              null
             );
 
             document.execCommand(
               "insertText",
               false,
-              text
+              value
             );
 
             composer.dispatchEvent(
-              new InputEvent("input", {
-                bubbles: true,
-                inputType:
-                  "insertText",
-                data: text,
-              })
-            );
-
-            composer.dispatchEvent(
-              new Event("change", {
-                bubbles: true,
-              })
+              new InputEvent(
+                "input",
+                {
+                  bubbles: true,
+                  inputType:
+                    "insertText",
+                  data: value,
+                }
+              )
             );
           };
 
-          /*
-           * ------------------------------------------------------
-           * FIND ALL EXACT USER MESSAGE ELEMENTS
-           * ------------------------------------------------------
-           */
-
-          const findUserMessageElements =
-            (userText) => {
-              const candidates =
-                Array.from(
-                  document.querySelectorAll(
-                    "div, p, span"
-                  )
-                );
-
-              const matches = [];
-
-              for (
-                const element of
-                  candidates
-              ) {
-                if (
-                  !isVisible(element)
-                ) {
-                  continue;
-                }
-
-                const text =
-                  getText(element);
-
-                if (
-                  text !== userText
-                ) {
-                  continue;
-                }
-
-                /*
-                 * Avoid selecting a nested duplicate if its
-                 * parent has exactly the same text.
-                 */
-
-                let parent =
-                  element.parentElement;
-
-                let duplicateParent =
-                  false;
-
-                for (
-                  let i = 0;
-                  i < 3 && parent;
-                  i++
-                ) {
-                  if (
-                    getText(parent) ===
-                    userText
-                  ) {
-                    duplicateParent =
-                      true;
-
-                    break;
-                  }
-
-                  parent =
-                    parent.parentElement;
-                }
-
-                if (
-                  duplicateParent
-                ) {
-                  continue;
-                }
-
-                matches.push(
-                  element
-                );
-              }
-
-              return matches;
-            };
-
-          /*
-           * ------------------------------------------------------
-           * EXTRACT TEXT FROM A NODE
-           * ------------------------------------------------------
-           */
-
-          const getMeaningfulText =
-            (element, userText) => {
-              if (!element) {
-                return "";
-              }
-
-              if (
-                !isVisible(element)
-              ) {
-                return "";
-              }
-
-              /*
-               * Never use the composer.
-               */
-
-              if (
-                element.matches(
-                  "textarea, input, [contenteditable='true'], [role='textbox']"
-                )
-              ) {
-                return "";
-              }
-
-              const text =
-                getText(element);
-
-              if (!text) {
-                return "";
-              }
-
-              if (
-                text === userText
-              ) {
-                return "";
-              }
-
-              if (
-                isIgnoredText(text)
-              ) {
-                return "";
-              }
-
-              /*
-               * Don't return giant containers containing the
-               * entire conversation.
-               */
-
-              if (
-                text.length > 5000
-              ) {
-                return "";
-              }
-
-              return text;
-            };
-
-          /*
-           * ------------------------------------------------------
-           * FIND RESPONSE AROUND LATEST USER MESSAGE
-           * ------------------------------------------------------
-           */
-
-          const findResponseNearUser =
-            (userText) => {
-              const matches =
-                findUserMessageElements(
-                  userText
-                );
-
-              if (
-                matches.length === 0
-              ) {
-                return "";
-              }
-
-              /*
-               * The LAST exact user-message element should be the
-               * request we just sent.
-               */
-
-              const userElement =
-                matches[
-                  matches.length - 1
-                ];
-
-              console.log(
-                "[ClaudePage] User element found:",
-                userElement
-              );
-
-              /*
-               * --------------------------------------------------
-               * STRATEGY 1
-               * Look at following siblings.
-               * --------------------------------------------------
-               */
-
-              let current =
-                userElement;
-
-              for (
-                let level = 0;
-                level < 6;
-                level++
-              ) {
-                const parent =
-                  current.parentElement;
-
-                if (!parent) {
-                  break;
-                }
-
-                const siblings =
-                  Array.from(
-                    parent.children
-                  );
-
-                const index =
-                  siblings.indexOf(
-                    current
-                  );
-
-                if (
-                  index >= 0
-                ) {
-                  for (
-                    let i =
-                      index + 1;
-                    i <
-                      siblings.length;
-                    i++
-                  ) {
-                    const sibling =
-                      siblings[i];
-
-                    const directText =
-                      getMeaningfulText(
-                        sibling,
-                        userText
-                      );
-
-                    if (
-                      directText
-                    ) {
-                      return directText;
-                    }
-
-                    /*
-                     * Inspect descendants.
-                     */
-
-                    const descendants =
-                      Array.from(
-                        sibling.querySelectorAll(
-                          "div, p, span"
-                        )
-                      );
-
-                    for (
-                      const descendant of
-                        descendants
-                    ) {
-                      const text =
-                        getMeaningfulText(
-                          descendant,
-                          userText
-                        );
-
-                      if (
-                        text
-                      ) {
-                        /*
-                         * Avoid metadata-only text.
-                         */
-
-                        if (
-                          !isIgnoredText(
-                            text
-                          )
-                        ) {
-                          return text;
-                        }
-                      }
-                    }
-                  }
-                }
-
-                current =
-                  parent;
-              }
-
-              /*
-               * --------------------------------------------------
-               * STRATEGY 2
-               * Walk ancestors and inspect their later content.
-               * --------------------------------------------------
-               */
-
-              let ancestor =
-                userElement.parentElement;
-
-              for (
-                let level = 0;
-                level < 8 && ancestor;
-                level++
-              ) {
-                const all =
-                  Array.from(
-                    ancestor.querySelectorAll(
-                      "div, p, span"
-                    )
-                  );
-
-                const userIndex =
-                  all.indexOf(
-                    userElement
-                  );
-
-                if (
-                  userIndex >= 0
-                ) {
-                  for (
-                    let i =
-                      userIndex + 1;
-                    i <
-                      all.length;
-                    i++
-                  ) {
-                    const candidate =
-                      all[i];
-
-                    const text =
-                      getMeaningfulText(
-                        candidate,
-                        userText
-                      );
-
-                    if (
-                      text
-                    ) {
-                      /*
-                       * Don't return a parent container containing
-                       * unrelated conversation content.
-                       */
-
-                      if (
-                        text.length <=
-                        3000
-                      ) {
-                        return text;
-                      }
-                    }
-                  }
-                }
-
-                ancestor =
-                  ancestor.parentElement;
-              }
-
-              return "";
-            };
-
-          /*
-           * ------------------------------------------------------
-           * FIND LIKELY ASSISTANT RESPONSE USING KNOWN CLAUDE
-           * ATTRIBUTES
-           * ------------------------------------------------------
-           */
-
-          const findResponseByAttributes =
-            (userText) => {
+          const getMessageText =
+            () => {
               const selectors = [
-                '[data-is-streaming]',
+                '[data-testid*="message"]',
                 '[data-testid*="assistant"]',
-                '[data-message-author-role="assistant"]',
-                '[data-testid="assistant-message"]',
+                '[class*="message"]',
+                '[class*="response"]',
+                '[class*="prose"]',
               ];
 
               const candidates = [];
@@ -900,16 +398,11 @@ const ClaudeProvider = {
                 const selector of
                   selectors
               ) {
-                const elements =
-                  Array.from(
+                for (
+                  const element of
                     document.querySelectorAll(
                       selector
                     )
-                  );
-
-                for (
-                  const element of
-                    elements
                 ) {
                   if (
                     !isVisible(
@@ -920,485 +413,196 @@ const ClaudeProvider = {
                   }
 
                   const text =
-                    getMeaningfulText(
-                      element,
-                      userText
+                    getText(
+                      element
                     );
 
                   if (
-                    text
-                  ) {
-                    candidates.push(
+                    !text ||
+                    isIgnoredText(
                       text
-                    );
+                    )
+                  ) {
+                    continue;
                   }
+
+                  candidates.push({
+                    element,
+                    text,
+                  });
                 }
               }
 
               if (
-                candidates.length ===
-                0
+                candidates.length === 0
               ) {
                 return "";
               }
 
-              return candidates[
-                candidates.length - 1
-              ];
+              candidates.sort(
+                (a, b) =>
+                  b.text.length -
+                  a.text.length
+              );
+
+              return candidates[0]
+                .text;
             };
 
-          /*
-           * ------------------------------------------------------
-           * RESPONSE DETECTION
-           * ------------------------------------------------------
-           */
+          const beforeText =
+            getMessageText();
 
-          const detectResponse =
-            (userText) => {
-              /*
-               * First try explicit assistant markers.
-               */
+          const composer =
+            findComposer();
 
-              const attributeResponse =
-                findResponseByAttributes(
-                  userText
-                );
-
-              if (
-                attributeResponse
-              ) {
-                return attributeResponse;
-              }
-
-              /*
-               * Then use conversation structure.
-               */
-
-              const nearbyResponse =
-                findResponseNearUser(
-                  userText
-                );
-
-              if (
-                nearbyResponse
-              ) {
-                return nearbyResponse;
-              }
-
-              return "";
-            };
-
-          /*
-           * ------------------------------------------------------
-           * MAIN
-           * ------------------------------------------------------
-           */
-
-          try {
-            console.log(
-              "[ClaudePage] Script started."
+          if (!composer) {
+            throw new Error(
+              "Claude message composer was not found."
             );
+          }
 
-            console.log(
-              "[ClaudePage] URL:",
-              window.location.href
-            );
-
-            if (
-              !window.location.hostname.includes(
-                "claude.ai"
+          const prompt =
+            incomingMessages
+              .map(
+                (message) =>
+                  message?.content || ""
               )
-            ) {
-              return {
-                ok: false,
+              .filter(Boolean)
+              .join("\n\n");
 
-                error:
-                  "Current tab is not claude.ai.",
-              };
-            }
+          if (!prompt.trim()) {
+            throw new Error(
+              "Claude prompt is empty."
+            );
+          }
+
+          setComposerValue(
+            composer,
+            prompt
+          );
+
+          await sleep(100);
+
+          const sendButton =
+            findSendButton();
+
+          if (sendButton) {
+            sendButton.click();
+          } else {
+            composer.focus();
+
+            composer.dispatchEvent(
+              new KeyboardEvent(
+                "keydown",
+                {
+                  key: "Enter",
+                  code: "Enter",
+                  keyCode: 13,
+                  which: 13,
+                  bubbles: true,
+                }
+              )
+            );
+          }
+
+          let lastText =
+            beforeText;
+
+          let stableCount = 0;
+
+          const startTime =
+            Date.now();
+
+          while (true) {
+            await sleep(250);
+
+            const currentText =
+              getMessageText();
 
             if (
-              !Array.isArray(
-                incomingMessages
-              ) ||
-              incomingMessages.length ===
-                0
+              currentText &&
+              currentText !==
+                beforeText
             ) {
-              return {
-                ok: false,
-
-                error:
-                  "No messages were provided.",
-              };
-            }
-
-            const lastUserMessage =
-              [...incomingMessages]
-                .reverse()
-                .find(
-                  (message) =>
-                    message &&
-                    message.role ===
-                      "user"
-                );
-
-            if (
-              !lastUserMessage
-            ) {
-              return {
-                ok: false,
-
-                error:
-                  "No user message found.",
-              };
-            }
-
-            const userText =
-              typeof lastUserMessage.content ===
-              "string"
-                ? lastUserMessage.content.trim()
-                : "";
-
-            if (!userText) {
-              return {
-                ok: false,
-
-                error:
-                  "User message is empty.",
-              };
-            }
-
-            console.log(
-              "[ClaudePage] User text:",
-              userText
-            );
-
-            /*
-             * Find composer.
-             */
-
-            const composer =
-              findComposer();
-
-            if (!composer) {
-              return {
-                ok: false,
-
-                error:
-                  "Claude composer was not found.",
-              };
-            }
-
-            /*
-             * IMPORTANT:
-             *
-             * Record how many exact user-message elements exist
-             * before sending.
-             */
-
-            const beforeUserElements =
-              findUserMessageElements(
-                userText
-              );
-
-            console.log(
-              "[ClaudePage] User message count BEFORE:",
-              beforeUserElements.length
-            );
-
-            /*
-             * Insert text.
-             */
-
-            setComposerText(
-              composer,
-              userText
-            );
-
-            await sleep(500);
-
-            /*
-             * Find send button.
-             */
-
-            let sendButton =
-              findSendButton();
-
-            if (!sendButton) {
-              await sleep(500);
-
-              sendButton =
-                findSendButton();
-            }
-
-            if (sendButton) {
-              console.log(
-                "[ClaudePage] Clicking send button."
-              );
-
-              sendButton.click();
-            } else {
-              /*
-               * Fallback Enter.
-               */
-
-              console.log(
-                "[ClaudePage] Send button not found. Pressing Enter."
-              );
-
-              composer.focus();
-
-              composer.dispatchEvent(
-                new KeyboardEvent(
-                  "keydown",
-                  {
-                    key: "Enter",
-                    code: "Enter",
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true,
-                  }
-                )
-              );
-
-              await sleep(100);
-
-              composer.dispatchEvent(
-                new KeyboardEvent(
-                  "keyup",
-                  {
-                    key: "Enter",
-                    code: "Enter",
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true,
-                  }
-                )
-              );
-            }
-
-            /*
-             * Wait for Claude to create a NEW user message and
-             * then produce its response.
-             */
-
-            console.log(
-              "[ClaudePage] Waiting for Claude response..."
-            );
-
-            const start =
-              Date.now();
-
-            const timeoutMs =
-              30000;
-
-            let lastResponse =
-              "";
-
-            let stableSince =
-              0;
-
-            while (
-              Date.now() - start <
-              timeoutMs
-            ) {
-              const currentUserElements =
-                findUserMessageElements(
-                  userText
-                );
-
-              /*
-               * Once Claude has added our latest user message,
-               * look for its corresponding response.
-               */
+              if (
+                currentText ===
+                lastText
+              ) {
+                stableCount += 1;
+              } else {
+                stableCount = 0;
+                lastText =
+                  currentText;
+              }
 
               if (
-                currentUserElements.length >
-                beforeUserElements.length
+                stableCount >= 6
               ) {
-                const response =
-                  detectResponse(
-                    userText
-                  );
+                await sleep(500);
+
+                const verifiedText =
+                  getMessageText();
 
                 if (
-                  response &&
-                  !isIgnoredText(
-                    response
-                  )
+                  verifiedText ===
+                  currentText
                 ) {
-                  console.log(
-                    "[ClaudePage] Candidate response:",
-                    response
-                  );
-
-                  if (
-                    response ===
-                    lastResponse
-                  ) {
-                    if (
-                      !stableSince
-                    ) {
-                      stableSince =
-                        Date.now();
-                    }
-
-                    /*
-                     * Wait 1 second so we don't capture an
-                     * incomplete streaming response.
-                     */
-
-                    if (
-                      Date.now() -
-                        stableSince >=
-                      1000
-                    ) {
-                      return {
-                        ok: true,
-
-                        content:
-                          response,
-                      };
-                    }
-                  } else {
-                    lastResponse =
-                      response;
-
-                    stableSince =
-                      Date.now();
-                  }
+                  return verifiedText;
                 }
               }
-
-              await sleep(400);
             }
 
             /*
-             * Final detection attempt.
+             * This is NOT a generation timeout.
+             *
+             * It only prevents the page script from running forever
+             * if Claude's page becomes completely unusable.
+             *
+             * The normal generation flow is based on completion/stability.
              */
-
-            const finalResponse =
-              detectResponse(
-                userText
-              );
-
-            console.log(
-              "[ClaudePage] Final detected response:",
-              finalResponse
-            );
-
             if (
-              finalResponse &&
-              !isIgnoredText(
-                finalResponse
-              )
+              Date.now() -
+                startTime >
+              30 * 60 * 1000
             ) {
-              return {
-                ok: true,
-
-                content:
-                  finalResponse,
-              };
+              throw new Error(
+                "Claude response did not complete."
+              );
             }
-
-            return {
-              ok: false,
-
-              error:
-                "Claude generated a response, but the response text could not be identified.",
-
-              debug: {
-                beforeUserMessageCount:
-                  beforeUserElements.length,
-
-                afterUserMessageCount:
-                  findUserMessageElements(
-                    userText
-                  ).length,
-
-                currentResponse:
-                  finalResponse,
-
-                pageTextTail:
-                  normalizeText(
-                    document.body?.innerText ||
-                      ""
-                  ).slice(-3000),
-              },
-            };
-          } catch (error) {
-            console.error(
-              "[ClaudePage] Error:",
-              error
-            );
-
-            return {
-              ok: false,
-
-              error:
-                error?.message ||
-                String(error),
-            };
           }
         },
-
         args: [messages],
       });
-
-    console.log(
-      "[ClaudeProvider] Script results:",
-      results
-    );
 
     const result =
       results?.[0]?.result;
 
-    console.log(
-      "[ClaudeProvider] Page result:",
-      result
-    );
-
-    if (!result) {
-      throw new Error(
-        "Claude page script returned an empty result."
-      );
-    }
-
-    if (!result.ok) {
-      console.error(
-        "[ClaudeProvider] Debug:",
-        result.debug
-      );
-
-      throw new Error(
-        result.error ||
-        "Claude page script failed."
-      );
-    }
-
     if (
-      typeof result.content !==
+      typeof result !==
         "string" ||
-      !result.content.trim()
+      !result.trim()
     ) {
       throw new Error(
         "Claude returned an empty response."
       );
     }
 
-    return result.content.trim();
+    return result.trim();
   },
 };
 
+
 /* ===== INLINED: providers/gemini.js ===== */
+
 const GeminiProvider = {
   name: "gemini",
 
   async sendMessage(tabId, messages) {
-    console.log(
-      "[GeminiProvider] Sending request to tab:",
-      tabId
-    );
+    if (!Number.isInteger(tabId)) {
+      throw new Error(
+        "Invalid Gemini tab ID."
+      );
+    }
 
     if (
       !Array.isArray(messages) ||
@@ -1416,11 +620,6 @@ const GeminiProvider = {
         },
 
         func: async (incomingMessages) => {
-          /*
-           * Everything inside this function runs inside
-           * gemini.google.com page context.
-           */
-
           const sleep = (ms) =>
             new Promise((resolve) => {
               setTimeout(resolve, ms);
@@ -1484,23 +683,39 @@ const GeminiProvider = {
             );
           };
 
-          /*
-           * ------------------------------------------------------
-           * FIND GEMINI COMPOSER
-           * ------------------------------------------------------
-           */
+          const isIgnoredText = (text) => {
+            const value =
+              normalizeText(text);
+
+            if (!value) {
+              return true;
+            }
+
+            const ignored = [
+              "Thinking",
+              "Generating",
+              "Loading",
+              "Send",
+              "Copy",
+              "Retry",
+              "Share",
+            ];
+
+            return (
+              ignored.includes(value) ||
+              value.length < 2
+            );
+          };
 
           const findComposer = () => {
             const selectors = [
-              'rich-textarea [contenteditable="true"]',
+              "textarea",
               '[contenteditable="true"]',
-              'textarea',
               '[role="textbox"]',
             ];
 
             for (
-              const selector of
-                selectors
+              const selector of selectors
             ) {
               const elements =
                 Array.from(
@@ -1509,96 +724,21 @@ const GeminiProvider = {
                   )
                 );
 
-              for (
-                const element of
-                  elements
-              ) {
-                if (
-                  !isVisible(element)
-                ) {
-                  continue;
-                }
+              const visible =
+                elements.find(
+                  (element) =>
+                    isVisible(element)
+                );
 
-                if (
-                  element.hasAttribute(
-                    "disabled"
-                  )
-                ) {
-                  continue;
-                }
-
-                if (
-                  element.getAttribute(
-                    "aria-disabled"
-                  ) === "true"
-                ) {
-                  continue;
-                }
-
-                return element;
+              if (visible) {
+                return visible;
               }
             }
 
             return null;
           };
 
-          /*
-           * ------------------------------------------------------
-           * FIND SEND BUTTON
-           * ------------------------------------------------------
-           */
-
           const findSendButton = () => {
-            const selectors = [
-              'button[aria-label*="Send"]',
-              'button[aria-label*="send"]',
-              'button[data-testid*="send"]',
-              'button[type="submit"]',
-            ];
-
-            for (
-              const selector of
-                selectors
-            ) {
-              const elements =
-                Array.from(
-                  document.querySelectorAll(
-                    selector
-                  )
-                );
-
-              for (
-                const element of
-                  elements
-              ) {
-                if (
-                  !isVisible(element)
-                ) {
-                  continue;
-                }
-
-                if (
-                  element.disabled
-                ) {
-                  continue;
-                }
-
-                if (
-                  element.getAttribute(
-                    "aria-disabled"
-                  ) === "true"
-                ) {
-                  continue;
-                }
-
-                return element;
-              }
-            }
-
-            /*
-             * Fallback.
-             */
-
             const buttons =
               Array.from(
                 document.querySelectorAll(
@@ -1607,8 +747,7 @@ const GeminiProvider = {
               );
 
             for (
-              const button of
-                buttons
+              const button of buttons
             ) {
               if (
                 !isVisible(button)
@@ -1616,37 +755,28 @@ const GeminiProvider = {
                 continue;
               }
 
-              if (
-                button.disabled
-              ) {
-                continue;
-              }
-
-              const aria =
-                normalizeText(
-                  button.getAttribute(
-                    "aria-label"
-                  )
-                );
-
-              const title =
-                normalizeText(
-                  button.getAttribute(
-                    "title"
-                  )
-                );
-
               const text =
-                getText(button);
-
-              const combined =
-                `${aria} ${title} ${text}`
+                getText(button)
                   .toLowerCase();
 
+              const aria =
+                (
+                  button.getAttribute(
+                    "aria-label"
+                  ) || ""
+                ).toLowerCase();
+
+              const title =
+                (
+                  button.getAttribute(
+                    "title"
+                  ) || ""
+                ).toLowerCase();
+
               if (
-                combined.includes(
-                  "send"
-                )
+                text === "send" ||
+                aria.includes("send") ||
+                title.includes("send")
               ) {
                 return button;
               }
@@ -1655,694 +785,360 @@ const GeminiProvider = {
             return null;
           };
 
-          /*
-           * ------------------------------------------------------
-           * SET COMPOSER TEXT
-           * ------------------------------------------------------
-           */
-
-          const setComposerText = (
+          const setComposerValue = (
             composer,
-            text
+            value
           ) => {
-            composer.focus();
-
-            /*
-             * TEXTAREA
-             */
-
             if (
               composer instanceof
               HTMLTextAreaElement
             ) {
-              const prototype =
-                Object.getPrototypeOf(
-                  composer
-                );
-
-              const descriptor =
+              const setter =
                 Object.getOwnPropertyDescriptor(
-                  prototype,
+                  HTMLTextAreaElement.prototype,
                   "value"
-                );
+                )?.set;
 
-              if (
-                descriptor &&
-                descriptor.set
-              ) {
-                descriptor.set.call(
+              if (setter) {
+                setter.call(
                   composer,
-                  text
+                  value
                 );
               } else {
                 composer.value =
-                  text;
+                  value;
               }
 
               composer.dispatchEvent(
-                new Event("input", {
-                  bubbles: true,
-                })
+                new Event(
+                  "input",
+                  {
+                    bubbles: true,
+                  }
+                )
               );
 
               composer.dispatchEvent(
-                new Event("change", {
-                  bubbles: true,
-                })
+                new Event(
+                  "change",
+                  {
+                    bubbles: true,
+                  }
+                )
               );
 
               return;
             }
 
-            /*
-             * CONTENTEDITABLE
-             */
-
-            const selection =
-              window.getSelection();
-
-            const range =
-              document.createRange();
-
-            range.selectNodeContents(
-              composer
-            );
-
-            selection.removeAllRanges();
-
-            selection.addRange(
-              range
-            );
+            composer.focus();
 
             document.execCommand(
-              "delete"
+              "selectAll",
+              false,
+              null
             );
 
             document.execCommand(
               "insertText",
               false,
-              text
+              value
             );
 
             composer.dispatchEvent(
-              new InputEvent("input", {
-                bubbles: true,
-                inputType:
-                  "insertText",
-                data: text,
-              })
-            );
-
-            composer.dispatchEvent(
-              new Event("change", {
-                bubbles: true,
-              })
+              new InputEvent(
+                "input",
+                {
+                  bubbles: true,
+                  inputType:
+                    "insertText",
+                  data: value,
+                }
+              )
             );
           };
 
-          /*
-           * ------------------------------------------------------
-           * RESPONSE SELECTORS
-           * ------------------------------------------------------
-           */
+          const getCandidateResponse =
+            () => {
+              const selectors = [
+                '[data-message-author-role="model"]',
+                '[data-message-author-role="assistant"]',
+                ".model-response",
+                ".markdown",
+                '[class*="model"]',
+                '[class*="response"]',
+              ];
 
-          const responseSelectors = [
-            "message-content",
-            "model-response",
-            ".model-response-text",
-            '[data-message-author-role="model"]',
-            '[data-message-author-role="assistant"]',
-            ".markdown",
-            ".markdown-main-panel",
-          ];
-
-          const getResponseCandidates = () => {
-            const candidates = [];
-
-            for (
-              const selector of
-                responseSelectors
-            ) {
-              const elements =
-                Array.from(
-                  document.querySelectorAll(
-                    selector
-                  )
-                );
+              const candidates = [];
 
               for (
-                const element of
-                  elements
+                const selector of
+                  selectors
               ) {
-                if (
-                  !isVisible(element)
-                ) {
-                  continue;
-                }
-
-                const text =
-                  getText(element);
-
-                if (!text) {
-                  continue;
-                }
-
-                /*
-                 * Never treat composer as response.
-                 */
-
-                if (
-                  element.matches(
-                    'textarea, [contenteditable="true"], [role="textbox"]'
-                  )
-                ) {
-                  continue;
-                }
-
-                candidates.push({
-                  element,
-                  text,
-                });
-              }
-            }
-
-            /*
-             * Remove duplicates.
-             */
-
-            const unique = [];
-
-            const seen =
-              new Set();
-
-            for (
-              const candidate of
-                candidates
-            ) {
-              if (
-                seen.has(
-                  candidate.element
-                )
-              ) {
-                continue;
-              }
-
-              seen.add(
-                candidate.element
-              );
-
-              unique.push(
-                candidate
-              );
-            }
-
-            return unique;
-          };
-
-          const getLatestResponse = () => {
-            const candidates =
-              getResponseCandidates();
-
-            if (
-              candidates.length ===
-              0
-            ) {
-              return "";
-            }
-
-            return candidates[
-              candidates.length - 1
-            ].text;
-          };
-
-          /*
-           * ------------------------------------------------------
-           * WAIT FOR COMPOSER
-           * ------------------------------------------------------
-           */
-
-          const waitForComposer =
-            async (
-              timeoutMs = 10000
-            ) => {
-              const start =
-                Date.now();
-
-              while (
-                Date.now() - start <
-                timeoutMs
-              ) {
-                const composer =
-                  findComposer();
-
-                if (composer) {
-                  return composer;
-                }
-
-                await sleep(300);
-              }
-
-              return null;
-            };
-
-          /*
-           * ------------------------------------------------------
-           * WAIT FOR RESPONSE
-           * ------------------------------------------------------
-           */
-
-          const waitForResponse =
-            async (
-              previousResponse,
-              timeoutMs = 30000
-            ) => {
-              const start =
-                Date.now();
-
-              let lastResponse =
-                "";
-
-              let stableSince =
-                0;
-
-              while (
-                Date.now() - start <
-                timeoutMs
-              ) {
-                const currentResponse =
-                  getLatestResponse();
-
-                if (
-                  currentResponse &&
-                  currentResponse !==
-                    previousResponse
+                for (
+                  const element of
+                    document.querySelectorAll(
+                      selector
+                    )
                 ) {
                   if (
-                    currentResponse ===
-                    lastResponse
+                    !isVisible(
+                      element
+                    )
                   ) {
-                    if (
-                      !stableSince
-                    ) {
-                      stableSince =
-                        Date.now();
-                    }
-
-                    /*
-                     * Wait for response to stop changing.
-                     */
-
-                    if (
-                      Date.now() -
-                        stableSince >=
-                      1200
-                    ) {
-                      return currentResponse;
-                    }
-                  } else {
-                    lastResponse =
-                      currentResponse;
-
-                    stableSince =
-                      Date.now();
+                    continue;
                   }
-                }
 
-                await sleep(500);
+                  const text =
+                    getText(
+                      element
+                    );
+
+                  if (
+                    !text ||
+                    isIgnoredText(
+                      text
+                    )
+                  ) {
+                    continue;
+                  }
+
+                  candidates.push({
+                    element,
+                    text,
+                  });
+                }
               }
 
-              /*
-               * Final attempt.
-               */
+              candidates.sort(
+                (a, b) =>
+                  b.text.length -
+                  a.text.length
+              );
 
-              const finalResponse =
-                getLatestResponse();
+              return (
+                candidates[0]?.text ||
+                ""
+              );
+            };
+
+          const beforeText =
+            getCandidateResponse();
+
+          const composer =
+            findComposer();
+
+          if (!composer) {
+            throw new Error(
+              "Gemini message composer was not found."
+            );
+          }
+
+          const prompt =
+            incomingMessages
+              .map(
+                (message) =>
+                  message?.content || ""
+              )
+              .filter(Boolean)
+              .join("\n\n");
+
+          if (!prompt.trim()) {
+            throw new Error(
+              "Gemini prompt is empty."
+            );
+          }
+
+          setComposerValue(
+            composer,
+            prompt
+          );
+
+          await sleep(100);
+
+          const sendButton =
+            findSendButton();
+
+          if (sendButton) {
+            sendButton.click();
+          } else {
+            composer.focus();
+
+            composer.dispatchEvent(
+              new KeyboardEvent(
+                "keydown",
+                {
+                  key: "Enter",
+                  code: "Enter",
+                  keyCode: 13,
+                  which: 13,
+                  bubbles: true,
+                }
+              )
+            );
+          }
+
+          let lastText =
+            beforeText;
+
+          let stableCount = 0;
+
+          while (true) {
+            await sleep(250);
+
+            const currentText =
+              getCandidateResponse();
+
+            if (
+              currentText &&
+              currentText !==
+                beforeText
+            ) {
+              if (
+                currentText ===
+                lastText
+              ) {
+                stableCount += 1;
+              } else {
+                stableCount = 0;
+                lastText =
+                  currentText;
+              }
 
               if (
-                finalResponse &&
-                finalResponse !==
-                  previousResponse
+                stableCount >= 6
               ) {
-                return finalResponse;
+                await sleep(500);
+
+                const verifiedText =
+                  getCandidateResponse();
+
+                if (
+                  verifiedText ===
+                  currentText
+                ) {
+                  return verifiedText;
+                }
               }
-
-              return "";
-            };
-
-          /*
-           * ------------------------------------------------------
-           * MAIN
-           * ------------------------------------------------------
-           */
-
-          try {
-            console.log(
-              "[GeminiPage] Script started."
-            );
-
-            console.log(
-              "[GeminiPage] URL:",
-              window.location.href
-            );
-
-            if (
-              !window.location.hostname.includes(
-                "gemini.google.com"
-              )
-            ) {
-              return {
-                ok: false,
-
-                error:
-                  "Current tab is not gemini.google.com.",
-              };
             }
-
-            if (
-              !Array.isArray(
-                incomingMessages
-              ) ||
-              incomingMessages.length ===
-                0
-            ) {
-              return {
-                ok: false,
-
-                error:
-                  "No messages were provided.",
-              };
-            }
-
-            const lastUserMessage =
-              [...incomingMessages]
-                .reverse()
-                .find(
-                  (message) =>
-                    message &&
-                    message.role ===
-                      "user"
-                );
-
-            if (
-              !lastUserMessage
-            ) {
-              return {
-                ok: false,
-
-                error:
-                  "No user message found.",
-              };
-            }
-
-            const userText =
-              typeof lastUserMessage.content ===
-              "string"
-                ? lastUserMessage.content.trim()
-                : "";
-
-            if (!userText) {
-              return {
-                ok: false,
-
-                error:
-                  "User message is empty.",
-              };
-            }
-
-            console.log(
-              "[GeminiPage] User text:",
-              userText
-            );
-
-            /*
-             * Get current response before sending.
-             */
-
-            const previousResponse =
-              getLatestResponse();
-
-            console.log(
-              "[GeminiPage] Previous response:",
-              previousResponse
-            );
-
-            /*
-             * Find composer.
-             */
-
-            const composer =
-              await waitForComposer();
-
-            if (!composer) {
-              return {
-                ok: false,
-
-                error:
-                  "Gemini composer was not found.",
-              };
-            }
-
-            console.log(
-              "[GeminiPage] Composer found:",
-              composer.tagName
-            );
-
-            /*
-             * Insert message.
-             */
-
-            setComposerText(
-              composer,
-              userText
-            );
-
-            await sleep(700);
-
-            console.log(
-              "[GeminiPage] Composer content:",
-              getText(composer)
-            );
-
-            /*
-             * Find Send button.
-             */
-
-            let sendButton =
-              findSendButton();
-
-            if (!sendButton) {
-              await sleep(500);
-
-              sendButton =
-                findSendButton();
-            }
-
-            if (sendButton) {
-              console.log(
-                "[GeminiPage] Clicking send button."
-              );
-
-              sendButton.click();
-            } else {
-              /*
-               * Fallback Enter.
-               */
-
-              console.log(
-                "[GeminiPage] Send button not found. Using Enter."
-              );
-
-              composer.focus();
-
-              composer.dispatchEvent(
-                new KeyboardEvent(
-                  "keydown",
-                  {
-                    key: "Enter",
-                    code: "Enter",
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true,
-                  }
-                )
-              );
-
-              await sleep(100);
-
-              composer.dispatchEvent(
-                new KeyboardEvent(
-                  "keyup",
-                  {
-                    key: "Enter",
-                    code: "Enter",
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true,
-                  }
-                )
-              );
-            }
-
-            /*
-             * Wait for Gemini.
-             */
-
-            console.log(
-              "[GeminiPage] Waiting for response..."
-            );
-
-            const response =
-              await waitForResponse(
-                previousResponse
-              );
-
-            console.log(
-              "[GeminiPage] Detected response:",
-              response
-            );
-
-            if (!response) {
-              return {
-                ok: false,
-
-                error:
-                  "Gemini generated a response, but the response text could not be detected.",
-
-                debug: {
-                  url:
-                    window.location.href,
-
-                  candidates:
-                    getResponseCandidates()
-                      .slice(-5)
-                      .map(
-                        (item) =>
-                          item.text.slice(
-                            0,
-                            500
-                          )
-                      ),
-                },
-              };
-            }
-
-            return {
-              ok: true,
-
-              content:
-                response,
-            };
-          } catch (error) {
-            console.error(
-              "[GeminiPage] Error:",
-              error
-            );
-
-            return {
-              ok: false,
-
-              error:
-                error?.message ||
-                String(error),
-            };
           }
         },
-
         args: [messages],
       });
-
-    console.log(
-      "[GeminiProvider] Script results:",
-      results
-    );
 
     const result =
       results?.[0]?.result;
 
-    console.log(
-      "[GeminiProvider] Page result:",
-      result
-    );
-
-    if (!result) {
-      throw new Error(
-        "Gemini page script returned an empty result."
-      );
-    }
-
-    if (!result.ok) {
-      console.error(
-        "[GeminiProvider] Debug:",
-        result.debug
-      );
-
-      throw new Error(
-        result.error ||
-        "Gemini page script failed."
-      );
-    }
-
     if (
-      typeof result.content !==
+      typeof result !==
         "string" ||
-      !result.content.trim()
+      !result.trim()
     ) {
       throw new Error(
         "Gemini returned an empty response."
       );
     }
 
-    return result.content.trim();
+    return result.trim();
   },
 };
 
-const WS_URL = "ws://127.0.0.1:8765/ws";
-const WATCHDOG_ALARM = "pair_bridge_watchdog";
+
+/* ================================================================
+ * PAIR BRIDGE CONNECTION
+ * ================================================================ */
+
+const BRIDGE_HOST = "127.0.0.1";
+const BRIDGE_PORT = 8765;
+
+const WS_URL =
+  `ws://${BRIDGE_HOST}:${BRIDGE_PORT}/ws`;
+
+const HTTP_URL =
+  `http://${BRIDGE_HOST}:${BRIDGE_PORT}/`;
+
+const WATCHDOG_ALARM =
+  "pair_bridge_watchdog";
+
 const RECONNECT_DELAY_MS = 2000;
-const ENABLED_KEY = "pairEnabled";
+
+const ENABLED_KEY =
+  "pairEnabled";
 
 let socket = null;
 let reconnectTimer = null;
-let activeProvider = "chatgpt";
-let pairEnabled = false;
-let lastConnectionError = null;
+let bridgeCheckInProgress = false;
 
-const debuggerTabs = new Set();
+let activeProvider =
+  "chatgpt";
+
+let pairEnabled =
+  false;
+
+let lastConnectionError =
+  null;
+
+const debuggerTabs =
+  new Set();
+
 
 const PROVIDERS = {
   chatgpt: {
     name: "ChatGPT",
+
     urlPatterns: [
       "https://chatgpt.com/",
       "https://chat.openai.com/",
     ],
-    handler: () => ChatGPTProvider,
+
+    handler: () =>
+      ChatGPTProvider,
   },
 
   claude: {
     name: "Claude",
+
     urlPatterns: [
       "https://claude.ai/",
     ],
-    handler: () => ClaudeProvider,
+
+    handler: () =>
+      ClaudeProvider,
   },
 
   gemini: {
     name: "Gemini",
+
     urlPatterns: [
       "https://gemini.google.com/",
     ],
-    handler: () => GeminiProvider,
+
+    handler: () =>
+      GeminiProvider,
   },
 };
+
 
 function detectProviderFromUrl(url) {
   if (!url) {
     return null;
   }
 
-  for (const [provider, config] of Object.entries(PROVIDERS)) {
-    if (config.urlPatterns.some((pattern) => url.startsWith(pattern))) {
+  for (
+    const [
+      provider,
+      config,
+    ] of Object.entries(
+      PROVIDERS
+    )
+  ) {
+    if (
+      config.urlPatterns.some(
+        (pattern) =>
+          url.startsWith(
+            pattern
+          )
+      )
+    ) {
       return provider;
     }
   }
@@ -2350,17 +1146,33 @@ function detectProviderFromUrl(url) {
   return null;
 }
 
-function isProviderTabUsable(provider, tab) {
-  if (!tab || !tab.url) {
+
+function isProviderTabUsable(
+  provider,
+  tab
+) {
+  if (
+    !tab ||
+    !tab.url
+  ) {
     return false;
   }
 
-  if (detectProviderFromUrl(tab.url) !== provider) {
+  if (
+    detectProviderFromUrl(
+      tab.url
+    ) !== provider
+  ) {
     return false;
   }
 
-  const url = tab.url.toLowerCase();
-  const title = (tab.title || "").toLowerCase();
+  const url =
+    tab.url.toLowerCase();
+
+  const title =
+    (
+      tab.title || ""
+    ).toLowerCase();
 
   const blockedWords = [
     "login",
@@ -2373,12 +1185,16 @@ function isProviderTabUsable(provider, tab) {
   ];
 
   return !blockedWords.some(
-    (word) => url.includes(word) || title.includes(word)
+    (word) =>
+      url.includes(word) ||
+      title.includes(word)
   );
 }
 
+
 async function getProviderTabs() {
-  const tabs = await chrome.tabs.query({});
+  const tabs =
+    await chrome.tabs.query({});
 
   const result = {
     chatgpt: [],
@@ -2386,8 +1202,13 @@ async function getProviderTabs() {
     gemini: [],
   };
 
-  for (const tab of tabs) {
-    const provider = detectProviderFromUrl(tab.url);
+  for (
+    const tab of tabs
+  ) {
+    const provider =
+      detectProviderFromUrl(
+        tab.url
+      );
 
     if (!provider) {
       continue;
@@ -2396,298 +1217,699 @@ async function getProviderTabs() {
     result[provider].push({
       tabId: tab.id,
       windowId: tab.windowId,
-      title: tab.title || "",
-      url: tab.url || "",
-      active: Boolean(tab.active),
-      usable: isProviderTabUsable(provider, tab),
+      title:
+        tab.title || "",
+      url:
+        tab.url || "",
+      active:
+        Boolean(tab.active),
+      usable:
+        isProviderTabUsable(
+          provider,
+          tab
+        ),
     });
   }
 
   return result;
 }
 
-async function getActiveProviderTab(provider) {
-  const tabs = await getProviderTabs();
-  const providerTabs = tabs[provider] || [];
 
-  const activeTab = providerTabs.find(
-    (tab) => tab.active && tab.usable
-  );
+async function getActiveProviderTab(
+  provider
+) {
+  const tabs =
+    await getProviderTabs();
+
+  const providerTabs =
+    tabs[provider] || [];
+
+  const activeTab =
+    providerTabs.find(
+      (tab) =>
+        tab.active &&
+        tab.usable
+    );
 
   if (activeTab) {
     return activeTab;
   }
 
-  return providerTabs.find((tab) => tab.usable) || null;
+  return (
+    providerTabs.find(
+      (tab) =>
+        tab.usable
+    ) || null
+  );
 }
+
 
 /*
  * Keep the provider renderer active while Chrome is minimized.
- * This does not bring the tab/window to the foreground.
+ *
+ * IMPORTANT:
+ * Do NOT use Page.bringToFront().
  */
-async function activateProviderLifecycle(tabId, provider) {
-  if (!Number.isInteger(tabId)) {
-    throw new Error(`Invalid ${provider} tab ID.`);
+async function activateProviderLifecycle(
+  tabId,
+  provider
+) {
+  if (
+    !Number.isInteger(tabId)
+  ) {
+    throw new Error(
+      `Invalid ${provider} tab ID.`
+    );
   }
 
-  if (debuggerTabs.has(tabId)) {
+  if (
+    debuggerTabs.has(tabId)
+  ) {
     await chrome.debugger.sendCommand(
       { tabId },
       "Emulation.setFocusEmulationEnabled",
-      { enabled: true }
+      {
+        enabled: true,
+      }
     );
 
     await chrome.debugger.sendCommand(
       { tabId },
       "Page.setWebLifecycleState",
-      { state: "active" }
+      {
+        state: "active",
+      }
     );
 
     return;
   }
 
   try {
-    await chrome.debugger.attach({ tabId }, "1.3");
+    await chrome.debugger.attach(
+      { tabId },
+      "1.3"
+    );
+
     debuggerTabs.add(tabId);
 
     await chrome.debugger.sendCommand(
       { tabId },
       "Emulation.setFocusEmulationEnabled",
-      { enabled: true }
+      {
+        enabled: true,
+      }
     );
 
     await chrome.debugger.sendCommand(
       { tabId },
       "Page.setWebLifecycleState",
-      { state: "active" }
+      {
+        state: "active",
+      }
     );
 
-    console.log(`${provider} lifecycle forced active: ${tabId}`);
+    console.log(
+      `${provider} lifecycle forced active: ${tabId}`
+    );
   } catch (error) {
-    debuggerTabs.delete(tabId);
+    debuggerTabs.delete(
+      tabId
+    );
 
     try {
-      await chrome.debugger.detach({ tabId });
+      await chrome.debugger.detach(
+        { tabId }
+      );
     } catch (_) {}
 
     throw new Error(
-      `Could not activate ${provider} page: ${error?.message || error}`
+      `Could not activate ${provider} page: ${
+        error?.message ||
+        error
+      }`
     );
   }
 }
 
-async function releaseProviderDebugger(tabId) {
-  if (!debuggerTabs.has(tabId)) {
+
+async function releaseProviderDebugger(
+  tabId
+) {
+  if (
+    !debuggerTabs.has(
+      tabId
+    )
+  ) {
     return;
   }
 
-  debuggerTabs.delete(tabId);
+  debuggerTabs.delete(
+    tabId
+  );
 
   try {
-    await chrome.debugger.detach({ tabId });
+    await chrome.debugger.detach(
+      { tabId }
+    );
   } catch (error) {
-    console.warn("PAIR could not detach debugger:", error);
+    console.warn(
+      "PAIR could not detach debugger:",
+      error
+    );
   }
 }
 
+
 async function releaseAllProviderDebuggers() {
-  const tabs = Array.from(debuggerTabs);
+  const tabs =
+    Array.from(
+      debuggerTabs
+    );
+
   await Promise.all(
-    tabs.map((tabId) => releaseProviderDebugger(tabId).catch(() => {}))
+    tabs.map(
+      (tabId) =>
+        releaseProviderDebugger(
+          tabId
+        ).catch(
+          () => {}
+        )
+    )
   );
 }
 
-chrome.debugger.onDetach.addListener((source) => {
-  if (source?.tabId != null) {
-    debuggerTabs.delete(source.tabId);
+
+chrome.debugger.onDetach.addListener(
+  (source) => {
+    if (
+      source?.tabId != null
+    ) {
+      debuggerTabs.delete(
+        source.tabId
+      );
+    }
   }
-});
+);
+
+
+/* ================================================================
+ * RECONNECT / BRIDGE HEALTH
+ * ================================================================ */
 
 function clearReconnectTimer() {
-  if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
+  if (
+    reconnectTimer
+  ) {
+    clearTimeout(
+      reconnectTimer
+    );
+
+    reconnectTimer =
+      null;
   }
 }
 
+
 function scheduleReconnect() {
-  if (!pairEnabled || reconnectTimer) {
+  if (
+    !pairEnabled ||
+    reconnectTimer
+  ) {
     return;
   }
 
-  reconnectTimer = setTimeout(() => {
-    reconnectTimer = null;
-    connectToBridge();
-  }, RECONNECT_DELAY_MS);
+  reconnectTimer =
+    setTimeout(
+      () => {
+        reconnectTimer =
+          null;
+
+        connectToBridge();
+      },
+      RECONNECT_DELAY_MS
+    );
 }
 
-function sendSocketMessage(message) {
-  if (!socket || socket.readyState !== WebSocket.OPEN) {
+
+/*
+ * Check whether the Python bridge is actually running BEFORE creating
+ * a WebSocket.
+ *
+ * This is the important fix.
+ *
+ * If Python has called client.close(), port 8765 is closed.
+ * Instead of doing:
+ *
+ *     new WebSocket(...)
+ *
+ * and producing:
+ *
+ *     ERR_CONNECTION_REFUSED
+ *
+ * we simply wait and retry later.
+ */
+async function isBridgeReachable() {
+  if (
+    bridgeCheckInProgress
+  ) {
+    return false;
+  }
+
+  bridgeCheckInProgress =
+    true;
+
+  try {
+    const controller =
+      new AbortController();
+
+    const timeoutId =
+      setTimeout(
+        () =>
+          controller.abort(),
+        1000
+      );
+
+    try {
+      const response =
+        await fetch(
+          HTTP_URL,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal:
+              controller.signal,
+          }
+        );
+
+      return response.ok;
+    } finally {
+      clearTimeout(
+        timeoutId
+      );
+    }
+  } catch (_) {
+    /*
+     * Bridge is not running.
+     *
+     * Deliberately do NOT log an error here.
+     *
+     * This is normal when the Python client has been closed.
+     */
+    return false;
+  } finally {
+    bridgeCheckInProgress =
+      false;
+  }
+}
+
+
+function sendSocketMessage(
+  message
+) {
+  if (
+    !socket ||
+    socket.readyState !==
+      WebSocket.OPEN
+  ) {
     return false;
   }
 
   try {
-    socket.send(JSON.stringify(message));
+    socket.send(
+      JSON.stringify(
+        message
+      )
+    );
+
     return true;
   } catch (error) {
-    console.warn("PAIR could not send bridge message:", error);
+    console.warn(
+      "PAIR could not send bridge message:",
+      error
+    );
+
     return false;
   }
 }
+
 
 function closeBridgeConnection() {
   clearReconnectTimer();
 
-  const currentSocket = socket;
-  socket = null;
+  const currentSocket =
+    socket;
+
+  socket =
+    null;
 
   if (!currentSocket) {
     return;
   }
 
   try {
-    currentSocket.close(1000, "PAIR disabled");
+    currentSocket.close(
+      1000,
+      "PAIR disabled"
+    );
   } catch (_) {}
 }
 
-function connectToBridge() {
+
+/*
+ * Connect to bridge only when:
+ *
+ * 1. PAIR is enabled
+ * 2. There isn't already an OPEN/CONNECTING socket
+ * 3. The local bridge is actually reachable
+ */
+async function connectToBridge() {
   if (!pairEnabled) {
     return;
   }
 
   if (
     socket &&
-    (socket.readyState === WebSocket.OPEN ||
-      socket.readyState === WebSocket.CONNECTING)
+    (
+      socket.readyState ===
+        WebSocket.OPEN ||
+      socket.readyState ===
+        WebSocket.CONNECTING
+    )
   ) {
     return;
   }
 
-  console.log("PAIR connecting to local development bridge...");
+  const reachable =
+    await isBridgeReachable();
 
-  const newSocket = new WebSocket(WS_URL);
-  socket = newSocket;
+  if (
+    !reachable
+  ) {
+    /*
+     * Do not report this as an error.
+     *
+     * The bridge may simply not be running yet.
+     */
+    lastConnectionError =
+      null;
 
-  newSocket.addEventListener("open", () => {
-    if (socket !== newSocket || !pairEnabled) {
+    scheduleReconnect();
+
+    return;
+  }
+
+  if (!pairEnabled) {
+    return;
+  }
+
+  if (
+    socket &&
+    (
+      socket.readyState ===
+        WebSocket.OPEN ||
+      socket.readyState ===
+        WebSocket.CONNECTING
+    )
+  ) {
+    return;
+  }
+
+  console.log(
+    "PAIR connecting to local development bridge..."
+  );
+
+  const newSocket =
+    new WebSocket(
+      WS_URL
+    );
+
+  socket =
+    newSocket;
+
+
+  newSocket.addEventListener(
+    "open",
+    () => {
+      if (
+        socket !==
+          newSocket ||
+        !pairEnabled
+      ) {
+        try {
+          newSocket.close();
+        } catch (_) {}
+
+        return;
+      }
+
+      clearReconnectTimer();
+
+      lastConnectionError =
+        null;
+
+      console.log(
+        "PAIR connected to local development bridge."
+      );
+
+      sendSocketMessage({
+        type:
+          "extension_ready",
+
+        name:
+          "PAIR",
+
+        version:
+          chrome.runtime.getManifest()
+            .version,
+      });
+    }
+  );
+
+
+  newSocket.addEventListener(
+    "message",
+    async (event) => {
       try {
-        newSocket.close();
-      } catch (_) {}
-      return;
-    }
+        const message =
+          JSON.parse(
+            event.data
+          );
 
-    clearReconnectTimer();
-    lastConnectionError = null;
-    console.log("PAIR connected to local development bridge.");
-
-    sendSocketMessage({
-      type: "extension_ready",
-      name: "PAIR",
-      version: chrome.runtime.getManifest().version,
-    });
-  });
-
-  newSocket.addEventListener("message", async (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      await handleServerMessage(message);
-    } catch (error) {
-      console.error("PAIR failed to process bridge message:", error);
-    }
-  });
-
-  newSocket.addEventListener("close", () => {
-    console.log("PAIR disconnected from local development bridge.");
-
-    if (socket === newSocket) {
-      socket = null;
-      if (pairEnabled) {
-        lastConnectionError = "Local PAIR bridge is not reachable at 127.0.0.1:8765.";
-        scheduleReconnect();
+        await handleServerMessage(
+          message
+        );
+      } catch (error) {
+        console.error(
+          "PAIR failed to process bridge message:",
+          error
+        );
       }
     }
-  });
+  );
 
-  newSocket.addEventListener("error", (error) => {
-    console.error("PAIR bridge WebSocket error:", error);
-    lastConnectionError = "Could not connect to the local PAIR bridge at 127.0.0.1:8765.";
-  });
+
+  newSocket.addEventListener(
+    "close",
+    () => {
+      console.log(
+        "PAIR disconnected from local development bridge."
+      );
+
+      /*
+       * IMPORTANT:
+       *
+       * Only the currently active socket is allowed to modify
+       * the global socket state.
+       */
+      if (
+        socket ===
+        newSocket
+      ) {
+        socket =
+          null;
+
+        if (
+          pairEnabled
+        ) {
+          /*
+           * Don't display connection errors for a normal
+           * bridge shutdown/restart.
+           *
+           * The watchdog will reconnect when the bridge returns.
+           */
+          lastConnectionError =
+            null;
+
+          scheduleReconnect();
+        }
+      }
+    }
+  );
+
+
+  newSocket.addEventListener(
+    "error",
+    () => {
+      /*
+       * WebSocket errors are intentionally not surfaced as
+       * noisy extension errors.
+       *
+       * The close event will schedule the reconnect.
+       */
+      if (
+        socket ===
+        newSocket
+      ) {
+        lastConnectionError =
+          null;
+      }
+    }
+  );
 }
 
-async function handleServerMessage(message) {
-  switch (message.type) {
+
+/* ================================================================
+ * SERVER MESSAGE HANDLING
+ * ================================================================ */
+
+async function handleServerMessage(
+  message
+) {
+  switch (
+    message.type
+  ) {
     case "chat_request":
-      await handleChatRequest(message);
+      await handleChatRequest(
+        message
+      );
       break;
 
     case "provider_changed":
-      if (PROVIDERS[message.provider]) {
-        activeProvider = message.provider;
+      if (
+        PROVIDERS[
+          message.provider
+        ]
+      ) {
+        activeProvider =
+          message.provider;
       }
       break;
 
     case "ping":
-      sendSocketMessage({ type: "pong" });
+      sendSocketMessage({
+        type: "pong",
+      });
       break;
 
     default:
-      console.log("PAIR received unknown bridge message:", message);
+      console.log(
+        "PAIR received unknown bridge message:",
+        message
+      );
   }
 }
 
-function sendChatError(requestId, error, errorCode, provider) {
+
+function sendChatError(
+  requestId,
+  error,
+  errorCode,
+  provider
+) {
   sendSocketMessage({
-    type: "chat_response",
+    type:
+      "chat_response",
+
     requestId,
-    error: String(error),
-    errorCode: errorCode || "provider_error",
+
+    error:
+      String(error),
+
+    errorCode:
+      errorCode ||
+      "provider_error",
+
     provider,
   });
 }
 
-async function handleChatRequest(message) {
-  const requestId = message.requestId;
+
+async function handleChatRequest(
+  message
+) {
+  const requestId =
+    message.requestId;
 
   if (!requestId) {
     return;
   }
 
-  if (!pairEnabled || !socket || socket.readyState !== WebSocket.OPEN) {
+  if (
+    !pairEnabled ||
+    !socket ||
+    socket.readyState !==
+      WebSocket.OPEN
+  ) {
     sendChatError(
       requestId,
+
       "PAIR is not connected to the local development bridge.",
+
       "bridge_not_connected",
+
       message.provider
     );
+
     return;
   }
 
-  const provider = message.provider || activeProvider;
-  const providerConfig = PROVIDERS[provider];
+  const provider =
+    message.provider ||
+    activeProvider;
+
+  const providerConfig =
+    PROVIDERS[
+      provider
+    ];
 
   if (!providerConfig) {
     sendChatError(
       requestId,
+
       `Unknown provider: ${provider}`,
+
       "unknown_provider",
+
       provider
     );
+
     return;
   }
 
-  let selectedTabId = null;
+  let selectedTabId =
+    null;
 
   try {
-    const tab = await getActiveProviderTab(provider);
-    selectedTabId = tab?.tabId ?? null;
+    const tab =
+      await getActiveProviderTab(
+        provider
+      );
+
+    selectedTabId =
+      tab?.tabId ??
+      null;
 
     if (!tab) {
       sendChatError(
         requestId,
+
         `${providerConfig.name} is not open. Open ${providerConfig.name} in a Chrome tab and try again.`,
+
         "provider_not_open",
+
         provider
       );
+
       return;
     }
 
@@ -2696,239 +1918,499 @@ async function handleChatRequest(message) {
       provider
     );
 
-    const handler = providerConfig.handler();
+    const handler =
+      providerConfig.handler();
 
     if (
       !handler ||
-      (typeof handler.sendMessage !== "function" &&
-        typeof handler.startMessage !== "function")
+      (
+        typeof handler.sendMessage !==
+          "function" &&
+        typeof handler.startMessage !==
+          "function"
+      )
     ) {
-      throw new Error(`${providerConfig.name} handler is not available.`);
+      throw new Error(
+        `${providerConfig.name} handler is not available.`
+      );
     }
 
+
+    /*
+     * ChatGPT uses a content script because the response
+     * is observed continuously from the page.
+     *
+     * The content script itself waits until the response
+     * is completely generated before sending pair_provider_result.
+     */
     if (
       provider === "chatgpt" &&
-      typeof handler.startMessage === "function"
+      typeof handler.startMessage ===
+        "function"
     ) {
       await handler.startMessage(
         tab.tabId,
         requestId,
         message.messages
       );
+
       return;
     }
 
-    const content = await handler.sendMessage(
-      tab.tabId,
-      message.messages
-    );
+
+    /*
+     * Claude/Gemini providers return only after their
+     * response is complete.
+     */
+    const content =
+      await handler.sendMessage(
+        tab.tabId,
+        message.messages
+      );
 
     sendSocketMessage({
-      type: "chat_response",
+      type:
+        "chat_response",
+
       requestId,
+
       content,
+
       provider,
     });
 
-    await releaseProviderDebugger(selectedTabId);
+    await releaseProviderDebugger(
+      selectedTabId
+    );
   } catch (error) {
-    console.error(`${providerConfig.name} request failed:`, error);
+    console.error(
+      `${providerConfig.name} request failed:`,
+      error
+    );
 
-    await releaseProviderDebugger(selectedTabId);
+    await releaseProviderDebugger(
+      selectedTabId
+    );
 
     sendChatError(
       requestId,
-      error?.message || `Failed to process ${providerConfig.name} request.`,
+
+      error?.message ||
+        `Failed to process ${providerConfig.name} request.`,
+
       "provider_error",
+
       provider
     );
   }
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type === "pair_provider_result") {
-    if (sender?.tab?.id != null) {
-      releaseProviderDebugger(sender.tab.id).catch(() => {});
-    }
 
-    sendSocketMessage({
-      type: "chat_response",
-      requestId: message.requestId,
-      content: message.content,
-      provider: "chatgpt",
-    });
+/* ================================================================
+ * POPUP / CONTENT SCRIPT MESSAGES
+ * ================================================================ */
 
-    sendResponse({ ok: true });
-    return false;
-  }
+chrome.runtime.onMessage.addListener(
+  (
+    message,
+    sender,
+    sendResponse
+  ) => {
 
-  if (message?.type === "pair_provider_error") {
-    if (sender?.tab?.id != null) {
-      releaseProviderDebugger(sender.tab.id).catch(() => {});
-    }
+    if (
+      message?.type ===
+      "pair_provider_result"
+    ) {
+      if (
+        sender?.tab?.id !=
+        null
+      ) {
+        releaseProviderDebugger(
+          sender.tab.id
+        ).catch(
+          () => {}
+        );
+      }
 
-    sendChatError(
-      message.requestId,
-      message.error || "Provider request failed.",
-      "provider_error",
-      "chatgpt"
-    );
+      sendSocketMessage({
+        type:
+          "chat_response",
 
-    sendResponse({ ok: true });
-    return false;
-  }
+        requestId:
+          message.requestId,
 
-  handlePopupMessage(message, sender)
-    .then(sendResponse)
-    .catch((error) => {
-      console.error("PAIR popup message error:", error);
-      sendResponse({
-        error: error?.message || "Unknown error",
+        content:
+          message.content,
+
+        provider:
+          "chatgpt",
       });
-    });
 
-  return true;
-});
+      sendResponse({
+        ok: true,
+      });
+
+      return false;
+    }
+
+
+    if (
+      message?.type ===
+      "pair_provider_error"
+    ) {
+      if (
+        sender?.tab?.id !=
+        null
+      ) {
+        releaseProviderDebugger(
+          sender.tab.id
+        ).catch(
+          () => {}
+        );
+      }
+
+      sendChatError(
+        message.requestId,
+
+        message.error ||
+          "Provider request failed.",
+
+        "provider_error",
+
+        "chatgpt"
+      );
+
+      sendResponse({
+        ok: true,
+      });
+
+      return false;
+    }
+
+
+    handlePopupMessage(
+      message,
+      sender
+    )
+      .then(
+        sendResponse
+      )
+      .catch(
+        (error) => {
+          console.error(
+            "PAIR popup message error:",
+            error
+          );
+
+          sendResponse({
+            error:
+              error?.message ||
+              "Unknown error",
+          });
+        }
+      );
+
+    return true;
+  }
+);
+
+
+/* ================================================================
+ * ENABLE / DISABLE
+ * ================================================================ */
 
 async function getPairEnabled() {
   try {
-    const result = await chrome.storage.session.get(ENABLED_KEY);
-    return result[ENABLED_KEY] === true;
+    const result =
+      await chrome.storage.session.get(
+        ENABLED_KEY
+      );
+
+    return (
+      result[
+        ENABLED_KEY
+      ] === true
+    );
   } catch (_) {
     return false;
   }
 }
 
-async function setPairEnabled(enabled) {
-  pairEnabled = Boolean(enabled);
+
+async function setPairEnabled(
+  enabled
+) {
+  pairEnabled =
+    Boolean(enabled);
 
   await chrome.storage.session.set({
-    [ENABLED_KEY]: pairEnabled,
+    [ENABLED_KEY]:
+      pairEnabled,
   });
 
-  if (pairEnabled) {
-    lastConnectionError = null;
+  if (
+    pairEnabled
+  ) {
+    lastConnectionError =
+      null;
+
     connectToBridge();
   } else {
-    lastConnectionError = null;
+    lastConnectionError =
+      null;
+
     closeBridgeConnection();
+
     await releaseAllProviderDebuggers();
   }
 
   return getStatus();
 }
 
-async function getStatus() {
-  const connected = Boolean(
-    socket && socket.readyState === WebSocket.OPEN
-  );
 
-  const providerTabs = await getProviderTabs();
+async function getStatus() {
+  const connected =
+    Boolean(
+      socket &&
+      socket.readyState ===
+        WebSocket.OPEN
+    );
+
+  const providerTabs =
+    await getProviderTabs();
 
   return {
-    enabled: pairEnabled,
+    enabled:
+      pairEnabled,
+
     connected,
-    connectionError: lastConnectionError,
-    provider: activeProvider,
-    providers: providerTabs,
+
+    connectionError:
+      lastConnectionError,
+
+    provider:
+      activeProvider,
+
+    providers:
+      providerTabs,
   };
 }
 
-async function handlePopupMessage(message) {
-  switch (message?.type) {
+
+/* ================================================================
+ * POPUP COMMANDS
+ * ================================================================ */
+
+async function handlePopupMessage(
+  message
+) {
+  switch (
+    message?.type
+  ) {
+
     case "get_status":
-      if (pairEnabled && (!socket || socket.readyState === WebSocket.CLOSED)) {
+
+      if (
+        pairEnabled &&
+        (
+          !socket ||
+          socket.readyState ===
+            WebSocket.CLOSED
+        )
+      ) {
         connectToBridge();
       }
+
       return getStatus();
 
+
     case "set_enabled":
-      return setPairEnabled(message.enabled === true);
+
+      return setPairEnabled(
+        message.enabled === true
+      );
+
 
     case "connect":
-      return setPairEnabled(true);
+
+      return setPairEnabled(
+        true
+      );
+
 
     case "disconnect":
-      return setPairEnabled(false);
+
+      return setPairEnabled(
+        false
+      );
+
 
     case "get_provider":
-      return { provider: activeProvider };
+
+      return {
+        provider:
+          activeProvider,
+      };
+
 
     case "get_provider_tabs":
+
       return getProviderTabs();
 
+
     case "get_active_provider_tab": {
-      const provider = message.provider || activeProvider;
-      return getActiveProviderTab(provider);
+      const provider =
+        message.provider ||
+        activeProvider;
+
+      return getActiveProviderTab(
+        provider
+      );
     }
 
-    case "set_provider": {
-      const provider = message.provider;
 
-      if (!PROVIDERS[provider]) {
-        throw new Error(`Unknown provider: ${provider}`);
+    case "set_provider": {
+      const provider =
+        message.provider;
+
+      if (
+        !PROVIDERS[
+          provider
+        ]
+      ) {
+        throw new Error(
+          `Unknown provider: ${provider}`
+        );
       }
 
-      activeProvider = provider;
+      activeProvider =
+        provider;
 
       sendSocketMessage({
-        type: "provider_changed",
+        type:
+          "provider_changed",
+
         provider,
       });
 
       return {
         success: true,
-        provider: activeProvider,
+
+        provider:
+          activeProvider,
       };
     }
 
+
     default:
+
       throw new Error(
         `Unknown popup message type: ${message?.type}`
       );
   }
 }
 
-chrome.tabs.onRemoved.addListener((tabId) => {
-  releaseProviderDebugger(tabId).catch(() => {});
-});
 
-chrome.runtime.onStartup.addListener(async () => {
-  // PAIR must be manually enabled for each new Chrome session.
-  pairEnabled = false;
-  clearReconnectTimer();
-  closeBridgeConnection();
-  await chrome.storage.session.set({
-    [ENABLED_KEY]: false,
-  });
-});
+/* ================================================================
+ * TAB / LIFECYCLE EVENTS
+ * ================================================================ */
 
-chrome.runtime.onInstalled.addListener(async () => {
-  pairEnabled = false;
-  clearReconnectTimer();
-  closeBridgeConnection();
-  await chrome.storage.session.set({
-    [ENABLED_KEY]: false,
-  });
-});
-
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm?.name !== WATCHDOG_ALARM || !pairEnabled) {
-    return;
+chrome.tabs.onRemoved.addListener(
+  (tabId) => {
+    releaseProviderDebugger(
+      tabId
+    ).catch(
+      () => {}
+    );
   }
+);
 
-  connectToBridge();
-});
 
-chrome.alarms.create(WATCHDOG_ALARM, {
-  periodInMinutes: 0.5,
-});
+chrome.runtime.onStartup.addListener(
+  async () => {
+
+    /*
+     * PAIR must be manually enabled for each
+     * new Chrome session.
+     */
+    pairEnabled =
+      false;
+
+    clearReconnectTimer();
+
+    closeBridgeConnection();
+
+    await chrome.storage.session.set({
+      [ENABLED_KEY]:
+        false,
+    });
+  }
+);
+
+
+chrome.runtime.onInstalled.addListener(
+  async () => {
+
+    pairEnabled =
+      false;
+
+    clearReconnectTimer();
+
+    closeBridgeConnection();
+
+    await chrome.storage.session.set({
+      [ENABLED_KEY]:
+        false,
+    });
+  }
+);
+
+
+/* ================================================================
+ * WATCHDOG
+ *
+ * Checks periodically whether the bridge has returned.
+ * There is no maximum connection timeout.
+ * ================================================================ */
+
+chrome.alarms.onAlarm.addListener(
+  async (alarm) => {
+
+    if (
+      alarm?.name !==
+        WATCHDOG_ALARM ||
+      !pairEnabled
+    ) {
+      return;
+    }
+
+    connectToBridge();
+  }
+);
+
+
+chrome.alarms.create(
+  WATCHDOG_ALARM,
+  {
+    periodInMinutes: 0.5,
+  }
+);
+
+
+/* ================================================================
+ * INITIAL STATE
+ * ================================================================ */
 
 (async () => {
-  pairEnabled = await getPairEnabled();
-  lastConnectionError = null;
+  pairEnabled =
+    await getPairEnabled();
 
-  if (pairEnabled) {
+  lastConnectionError =
+    null;
+
+  if (
+    pairEnabled
+  ) {
     connectToBridge();
   }
 })();
