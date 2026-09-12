@@ -38,8 +38,10 @@
           : [],
         baseline: getAssistantMessages(),
         observer: null,
+        settleTimer: null,
         submitted: false,
         resolved: false,
+        lastObservedText: "",
       };
 
       activeRequests.set(requestId, request);
@@ -136,10 +138,77 @@
     }
 
     if (isStillGenerating(latest)) {
+      request.lastObservedText = text;
+      clearSettleTimer(request);
       return;
     }
 
-    resolveRequest(request, text);
+    // ChatGPT can temporarily expose a partial assistant message while the
+    // response is still being generated. Do not resolve on the first DOM
+    // mutation. Wait until the text has remained unchanged for a short
+    // settling period, then verify it again before returning it to Python.
+    if (request.lastObservedText !== text) {
+      request.lastObservedText = text;
+      scheduleSettleCheck(request);
+      return;
+    }
+
+    scheduleSettleCheck(request);
+  }
+
+
+  const RESPONSE_SETTLE_MS = 1500;
+
+  function clearSettleTimer(request) {
+    if (request.settleTimer !== null) {
+      clearTimeout(request.settleTimer);
+      request.settleTimer = null;
+    }
+  }
+
+  function scheduleSettleCheck(request) {
+    if (request.resolved || request.settleTimer !== null) {
+      return;
+    }
+
+    request.settleTimer = setTimeout(() => {
+      request.settleTimer = null;
+
+      if (request.resolved) {
+        return;
+      }
+
+      const current = getAssistantMessages();
+      const newMessages = current.filter(
+        (element) => !request.baseline.includes(element)
+      );
+
+      if (newMessages.length === 0) {
+        return;
+      }
+
+      const latest = newMessages[newMessages.length - 1];
+      const text = extractText(latest);
+
+      if (!text) {
+        return;
+      }
+
+      if (isStillGenerating(latest)) {
+        request.lastObservedText = text;
+        return;
+      }
+
+      if (text !== request.lastObservedText) {
+        request.lastObservedText = text;
+        scheduleSettleCheck(request);
+        return;
+      }
+
+      // Final verification: the DOM still contains the same complete-looking
+      // text and ChatGPT is no longer exposing an active generation signal.
+      resolveRequest(request, text);
+    }, RESPONSE_SETTLE_MS);
   }
 
   function findComposer() {
@@ -267,6 +336,7 @@
     }
 
     request.resolved = true;
+    clearSettleTimer(request);
     request.observer?.disconnect();
     request.observer = null;
     activeRequests.delete(request.requestId);
@@ -287,6 +357,7 @@
     }
 
     request.resolved = true;
+    clearSettleTimer(request);
     request.observer?.disconnect();
     request.observer = null;
     activeRequests.delete(request.requestId);
