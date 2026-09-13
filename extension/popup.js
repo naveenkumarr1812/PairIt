@@ -1,6 +1,5 @@
 const statusEl = document.getElementById("status");
 const toggleEl = document.getElementById("toggle");
-const providerEl = document.getElementById("provider");
 const providersEl = document.getElementById("providers");
 const errorEl = document.getElementById("error");
 
@@ -51,8 +50,6 @@ function renderProviders(providers = {}) {
 
 function render(status) {
   errorEl.textContent = "";
-  providerEl.value = status.provider || "chatgpt";
-
   if (!status.enabled) {
     statusEl.innerHTML =
       "<strong>PAIR is off</strong>Turn it on to connect this browser session to the local development bridge.";
@@ -100,18 +97,6 @@ toggleEl.addEventListener("click", async () => {
     errorEl.textContent = error.message;
   } finally {
     toggleEl.disabled = false;
-  }
-});
-
-providerEl.addEventListener("change", async () => {
-  try {
-    await send({
-      type: "set_provider",
-      provider: providerEl.value,
-    });
-    await refresh();
-  } catch (error) {
-    errorEl.textContent = error.message;
   }
 });
 
