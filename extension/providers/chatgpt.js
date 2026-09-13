@@ -65,7 +65,7 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
   },
 };
 
-const chatGPTPendingRequests = new Map();
+var chatGPTPendingRequests = new Map();
 
 /*
  * Results for non-streaming ChatGPT requests are awaited by
