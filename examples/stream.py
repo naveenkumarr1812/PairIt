@@ -1,5 +1,6 @@
 from pair import Client
 
+
 client = Client(provider="chatgpt")
 
 try:
@@ -7,7 +8,11 @@ try:
         "Explain async programming in Python",
         stream=True,
     ):
-        print(chunk.content, end="", flush=True)
+        print(
+            chunk.content,
+            end="",
+            flush=True,
+        )
 
     print()
 finally:

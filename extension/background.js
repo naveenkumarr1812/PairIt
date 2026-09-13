@@ -956,14 +956,46 @@ async function handleChatRequest(
 
 
     /*
-     * Claude/Gemini providers return only after their
-     * response is complete.
+     * Complete-response request.
+     *
+     * ChatGPT exposes the same complete-response operation through
+     * startMessage(), while Claude and Gemini expose sendMessage().
+     * Use the appropriate method instead of assuming every provider
+     * implements sendMessage().
      */
-    const content =
-      await handler.sendMessage(
+    let content;
+
+    if (
+      provider === "chatgpt" &&
+      typeof handler.startMessage === "function"
+    ) {
+      content = await handler.startMessage(
+        tab.tabId,
+        requestId,
+        message.messages,
+        false
+      );
+    } else if (
+      typeof handler.sendMessage === "function"
+    ) {
+      content = await handler.sendMessage(
         tab.tabId,
         message.messages
       );
+    } else {
+      sendChatError(
+        requestId,
+        `${providerConfig.name} does not support complete chat requests.`,
+        "provider_error",
+        provider
+      );
+
+      await releaseProviderDebugger(
+        selectedTabId
+      );
+
+      return;
+    }
 
     sendSocketMessage({
       type:

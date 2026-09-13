@@ -21,6 +21,9 @@ from .exceptions import (
 
 logger = logging.getLogger(__name__)
 
+EXTENSION_CONNECT_WAIT_SECONDS = 10.0
+
+
 PROVIDERS = {
     "chatgpt",
     "claude",
@@ -393,18 +396,21 @@ class BridgeServer:
             )
 
         # --------------------------------------------------------------
-        # Wait for the PAIR extension.
-        #
-        # There is no fixed user-facing connection timeout. The call waits
-        # until the extension connects, then continues immediately.
+        # Wait briefly for the PAIR extension to connect.
+        # The extension may reconnect during this period.
+        # Generation itself still has no default timeout.
         # --------------------------------------------------------------
 
         if not self.extension_connected:
-            connected = self.wait_for_extension(timeout=None)
+            connected = self.wait_for_extension(
+                timeout=EXTENSION_CONNECT_WAIT_SECONDS
+            )
 
             if not connected:
                 raise ExtensionNotConnectedError(
-                    "PAIR Chrome extension is not connected."
+                    "PAIR extension is not connected. "
+                    "First connect with the PAIR extension, "
+                    "then try again."
                 )
 
         # --------------------------------------------------------------
@@ -415,8 +421,9 @@ class BridgeServer:
 
             if not self.extension_connected:
                 raise ExtensionNotConnectedError(
-                    "Chrome extension disconnected "
-                    "before the request started."
+                    "PAIR extension is not connected. "
+                    "First connect with the PAIR extension, "
+                    "then try again."
                 )
 
             request_id = (
@@ -540,9 +547,9 @@ class BridgeServer:
         """
         Stream incremental browser response chunks.
 
-        There is no default generation timeout. The iterator blocks until the
-        extension reports completion. If timeout is supplied, it applies to
-        waiting for each stream event.
+        PAIR waits briefly for the extension to connect. Once the request is
+        sent, there is no default generation timeout. If timeout is supplied,
+        it applies to waiting for each stream event.
         """
         if provider not in PROVIDERS:
             raise ValueError(
@@ -555,18 +562,23 @@ class BridgeServer:
             )
 
         if not self.extension_connected:
-            connected = self.wait_for_extension(timeout=None)
+            connected = self.wait_for_extension(
+                timeout=EXTENSION_CONNECT_WAIT_SECONDS
+            )
 
             if not connected:
                 raise ExtensionNotConnectedError(
-                    "PAIR Chrome extension is not connected."
+                    "PAIR extension is not connected. "
+                    "First connect with the PAIR extension, "
+                    "then try again."
                 )
 
         with self._chat_lock:
             if not self.extension_connected:
                 raise ExtensionNotConnectedError(
-                    "Chrome extension disconnected "
-                    "before the request started."
+                    "PAIR extension is not connected. "
+                    "First connect with the PAIR extension, "
+                    "then try again."
                 )
 
             request_id = (
@@ -680,7 +692,7 @@ class BridgeServer:
         return self._json_response(
             {
                 "name": "PAIR",
-                "version": "0.3.0",
+                "version": "0.3.6",
                 "status": "running",
                 "extensionConnected": (
                     self.extension_connected

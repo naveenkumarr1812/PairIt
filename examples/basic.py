@@ -1,6 +1,7 @@
 from pair import Client
 
-client = Client(provider="claude")
+
+client = Client(provider="chatgpt")
 
 try:
     response = client.chat("who invent phone")
