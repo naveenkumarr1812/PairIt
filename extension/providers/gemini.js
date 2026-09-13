@@ -901,4 +901,251 @@ const GeminiProvider = {
 
     return result.content.trim();
   },
+
+  async startStreamMessage(tabId, requestId, messages) {
+    if (!Number.isInteger(tabId)) {
+      throw new Error("Invalid gemini tab ID.");
+    }
+
+    if (!requestId) {
+      throw new Error("Missing gemini request ID.");
+    }
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: streamGeminiPage,
+      args: [messages, requestId],
+    });
+
+    const result = results?.[0]?.result;
+
+    if (!result || result.ok !== true) {
+      throw new Error(
+        result?.error ||
+        "Gemini streaming page could not start."
+      );
+    }
+
+    return true;
+  },
+
 };
+
+async function streamGeminiPage(incomingMessages, requestId) {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const normalize = (value) => String(value || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\r/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+  const textOf = (el) => normalize(el?.innerText || el?.textContent || "");
+  const visible = (el) => {
+    if (!el) return false;
+    const s = getComputedStyle(el);
+    if (s.display === "none" || s.visibility === "hidden" || s.opacity === "0") return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+
+  const findComposer = () => {
+    for (const selector of [
+      'rich-textarea [contenteditable="true"]',
+      '[contenteditable="true"]',
+      "textarea",
+      '[role="textbox"]'
+    ]) {
+      for (const el of document.querySelectorAll(selector)) {
+        if (visible(el) && !el.disabled && el.getAttribute("aria-disabled") !== "true") return el;
+      }
+    }
+    return null;
+  };
+
+  const setComposer = (el, text) => {
+    el.focus();
+    if (el instanceof HTMLTextAreaElement) {
+      const proto = Object.getPrototypeOf(el);
+      const desc = Object.getOwnPropertyDescriptor(proto, "value");
+      if (desc?.set) desc.set.call(el, text); else el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+      return;
+    }
+    const selection = getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand("delete");
+    document.execCommand("insertText", false, text);
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+  };
+
+  const findSend = () => {
+    for (const selector of [
+      'button[aria-label*="Send"]',
+      'button[aria-label*="send"]',
+      'button[data-testid*="send"]',
+      'button[type="submit"]'
+    ]) {
+      for (const el of document.querySelectorAll(selector)) {
+        if (visible(el) && !el.disabled && el.getAttribute("aria-disabled") !== "true") return el;
+      }
+    }
+    return null;
+  };
+
+  const responseSelectors = [
+    "message-content",
+    "model-response",
+    ".model-response-text",
+    '[data-message-author-role="model"]',
+    '[data-message-author-role="assistant"]',
+    ".markdown",
+    ".markdown-main-panel"
+  ];
+
+  const getResponse = () => {
+    const candidates = [];
+    for (const selector of responseSelectors) {
+      for (const el of document.querySelectorAll(selector)) {
+        if (!visible(el)) continue;
+        if (el.matches('textarea,[contenteditable="true"],[role="textbox"]')) continue;
+        const text = textOf(el);
+        if (text) candidates.push(text);
+      }
+    }
+    return candidates.at(-1) || "";
+  };
+
+  const isGenerating = () => {
+    const stop = document.querySelector(
+      'button[aria-label*="Stop"],button[title*="Stop"],button[data-testid*="stop"]'
+    );
+    return Boolean(stop && visible(stop) && !stop.disabled);
+  };
+
+  const prompt = [...(Array.isArray(incomingMessages) ? incomingMessages : [])]
+    .reverse().find((m) => m?.role === "user")?.content;
+  const userText = typeof prompt === "string" ? prompt.trim() : "";
+  if (!userText) throw new Error("User message is empty.");
+
+  let lastText = "";
+  let resolved = false;
+  let settleTimer = null;
+  let observer = null;
+
+  const send = (message) => chrome.runtime.sendMessage(message).catch(() => {});
+  const cleanup = () => {
+    if (settleTimer !== null) clearTimeout(settleTimer);
+    settleTimer = null;
+    observer?.disconnect();
+    observer = null;
+  };
+  const fail = (error) => {
+    if (resolved) return;
+    resolved = true;
+    cleanup();
+    send({
+      type: "pair_provider_stream_error",
+      provider: "gemini",
+      requestId,
+      error: error?.message || String(error)
+    });
+  };
+  const emit = (text) => {
+    if (resolved || text === lastText) return;
+    const delta = text.startsWith(lastText) ? text.slice(lastText.length) : text;
+    lastText = text;
+    if (delta) send({
+      type: "pair_provider_stream_chunk",
+      provider: "gemini",
+      requestId,
+      content: delta,
+      done: false
+    });
+  };
+  const finish = (text) => {
+    if (resolved) return;
+    emit(text);
+    resolved = true;
+    cleanup();
+    send({
+      type: "pair_provider_stream_chunk",
+      provider: "gemini",
+      requestId,
+      content: "",
+      done: true
+    });
+  };
+
+  const process = () => {
+    if (resolved) return;
+    const current = getResponse();
+    if (!current) return;
+    emit(current);
+
+    if (isGenerating()) {
+      if (settleTimer !== null) clearTimeout(settleTimer);
+      settleTimer = null;
+      return;
+    }
+
+    if (settleTimer !== null) return;
+    const expected = current;
+    settleTimer = setTimeout(() => {
+      settleTimer = null;
+      if (resolved) return;
+      const verified = getResponse();
+      if (!verified) return;
+      if (isGenerating()) {
+        process();
+        return;
+      }
+      if (verified !== expected) {
+        process();
+        return;
+      }
+      finish(verified);
+    }, 1500);
+  };
+
+  try {
+    if (!window.location.hostname.includes("gemini.google.com")) {
+      throw new Error("Current tab is not gemini.google.com.");
+    }
+
+    const composer = findComposer();
+    if (!composer) throw new Error("Gemini composer was not found.");
+
+    observer = new MutationObserver(process);
+    observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["aria-busy", "disabled", "class"]
+    });
+
+    setComposer(composer, userText);
+    await sleep(500);
+
+    const button = findSend();
+    if (button) {
+      button.click();
+    } else {
+      composer.focus();
+      composer.dispatchEvent(new KeyboardEvent("keydown", {
+        key: "Enter", code: "Enter", keyCode: 13, which: 13,
+        bubbles: true, cancelable: true
+      }));
+    }
+
+    process();
+    return { ok: true };
+  } catch (error) {
+    fail(error);
+    return { ok: false, error: error?.message || String(error) };
+  }
+}

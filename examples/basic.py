@@ -3,7 +3,7 @@ from pair import Client
 client = Client(provider="claude")
 
 try:
-    response = client.chat("who invented bulb")
+    response = client.chat("who invent phone")
     print(response.content)
 finally:
     client.close()

@@ -74,3 +74,22 @@ A provider does not need to be connected permanently. It only needs to be open w
 ## Safety boundary
 
 PAIR is intended for development with AI services the developer is already authorized to use. It does not extract session cookies, bypass authentication, bypass anti-bot controls, or implement automatic provider switching to evade service limits.
+
+
+## Streaming
+
+PAIR supports true browser-side streaming through the provider page observer:
+
+```python
+from pair import Client
+
+client = Client(provider="chatgpt")
+
+try:
+    for chunk in client.chat("Explain RAG", stream=True):
+        print(chunk.content, end="", flush=True)
+finally:
+    client.close()
+```
+
+`stream=False` remains the default and returns only after the complete response is generated.

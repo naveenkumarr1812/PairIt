@@ -1338,4 +1338,287 @@ const ClaudeProvider = {
 
     return result.content.trim();
   },
+
+  async startStreamMessage(tabId, requestId, messages) {
+    if (!Number.isInteger(tabId)) {
+      throw new Error("Invalid claude tab ID.");
+    }
+
+    if (!requestId) {
+      throw new Error("Missing claude request ID.");
+    }
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: streamClaudePage,
+      args: [messages, requestId],
+    });
+
+    const result = results?.[0]?.result;
+
+    if (!result || result.ok !== true) {
+      throw new Error(
+        result?.error ||
+        "Claude streaming page could not start."
+      );
+    }
+
+    return true;
+  },
+
 };
+
+async function streamClaudePage(incomingMessages, requestId) {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const normalize = (value) => String(value || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\r/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+
+  const textOf = (el) => normalize(el?.innerText || el?.textContent || "");
+
+  const visible = (el) => {
+    if (!el) return false;
+    const s = getComputedStyle(el);
+    if (s.display === "none" || s.visibility === "hidden" || s.opacity === "0") return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+
+  const ignored = new Set([
+    "just now", "Write a message…", "Write a message...", "Send",
+    "Send Message", "New", "Projects", "Artifacts", "Code", "Customize",
+    "Share", "Upgrade", "Copy", "Retry", "Regenerate", "Like", "Dislike",
+    "Crystallizing", "Thinking", "Claude is thinking",
+    "Claude is thinking…", "Claude is thinking...", "Working",
+    "Generating", "Processing", "Loading"
+  ]);
+
+  const meaningful = (el, userText) => {
+    if (!visible(el)) return "";
+    if (el.matches("textarea,input,[contenteditable='true'],[role='textbox']")) return "";
+    const text = textOf(el);
+    if (!text || text === userText || ignored.has(text) || text.length > 5000) return "";
+    return text;
+  };
+
+  const findComposer = () => {
+    for (const selector of ["textarea", '[contenteditable="true"]', '[role="textbox"]', ".ProseMirror"]) {
+      for (const el of document.querySelectorAll(selector)) {
+        if (visible(el) && !el.disabled && el.getAttribute("aria-disabled") !== "true") return el;
+      }
+    }
+    return null;
+  };
+
+  const setComposer = (el, text) => {
+    el.focus();
+    if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+      const proto = Object.getPrototypeOf(el);
+      const desc = Object.getOwnPropertyDescriptor(proto, "value");
+      if (desc?.set) desc.set.call(el, text); else el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+      return;
+    }
+    const selection = getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand("delete");
+    document.execCommand("insertText", false, text);
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+  };
+
+  const findSend = () => {
+    for (const selector of [
+      'button[aria-label="Send Message"]',
+      'button[aria-label="Send message"]',
+      'button[aria-label*="Send"]',
+      'button[aria-label*="send"]',
+      'button[data-testid*="send"]',
+      'button[type="submit"]'
+    ]) {
+      for (const el of document.querySelectorAll(selector)) {
+        if (visible(el) && !el.disabled && el.getAttribute("aria-disabled") !== "true") return el;
+      }
+    }
+    return null;
+  };
+
+  const isGenerating = () => {
+    const stop = document.querySelector(
+      'button[aria-label*="Stop"],button[title*="Stop"],button[data-testid*="stop"]'
+    );
+    const busy = document.querySelector('[aria-busy="true"]');
+    return Boolean((stop && visible(stop) && !stop.disabled) || busy);
+  };
+
+  const userText = [...(Array.isArray(incomingMessages) ? incomingMessages : [])]
+    .reverse().find((m) => m?.role === "user")?.content;
+  const prompt = typeof userText === "string" ? userText.trim() : "";
+  if (!prompt) throw new Error("User message is empty.");
+
+  const findResponse = () => {
+    const candidates = [];
+    for (const selector of [
+      '[data-is-streaming]',
+      '[data-testid*="assistant"]',
+      '[data-message-author-role="assistant"]',
+      '[data-testid="assistant-message"]'
+    ]) {
+      for (const el of document.querySelectorAll(selector)) {
+        const text = meaningful(el, prompt);
+        if (text) candidates.push(text);
+      }
+    }
+    if (candidates.length) return candidates[candidates.length - 1];
+
+    const users = [];
+    for (const el of document.querySelectorAll("div,p,span")) {
+      if (visible(el) && textOf(el) === prompt) users.push(el);
+    }
+    const user = users.at(-1);
+    if (!user) return "";
+
+    let current = user;
+    for (let level = 0; level < 6 && current; level++) {
+      const parent = current.parentElement;
+      if (!parent) break;
+      const siblings = [...parent.children];
+      const index = siblings.indexOf(current);
+      for (let i = index + 1; i < siblings.length; i++) {
+        const direct = meaningful(siblings[i], prompt);
+        if (direct) return direct;
+        for (const d of siblings[i].querySelectorAll("div,p,span")) {
+          const t = meaningful(d, prompt);
+          if (t && t.length <= 5000) return t;
+        }
+      }
+      current = parent;
+    }
+    return "";
+  };
+
+  let lastText = "";
+  let resolved = false;
+  let settleTimer = null;
+  let observer = null;
+
+  const send = (message) => chrome.runtime.sendMessage(message).catch(() => {});
+
+  const cleanup = () => {
+    if (settleTimer !== null) clearTimeout(settleTimer);
+    settleTimer = null;
+    observer?.disconnect();
+    observer = null;
+  };
+
+  const fail = (error) => {
+    if (resolved) return;
+    resolved = true;
+    cleanup();
+    send({
+      type: "pair_provider_stream_error",
+      provider: "claude",
+      requestId,
+      error: error?.message || String(error)
+    });
+  };
+
+  const emit = (text) => {
+    if (resolved || text === lastText) return;
+    let delta = text.startsWith(lastText) ? text.slice(lastText.length) : text;
+    lastText = text;
+    if (delta) send({
+      type: "pair_provider_stream_chunk",
+      provider: "claude",
+      requestId,
+      content: delta,
+      done: false
+    });
+  };
+
+  const finish = (text) => {
+    if (resolved) return;
+    emit(text);
+    resolved = true;
+    cleanup();
+    send({
+      type: "pair_provider_stream_chunk",
+      provider: "claude",
+      requestId,
+      content: "",
+      done: true
+    });
+  };
+
+  const process = () => {
+    if (resolved) return;
+    const current = findResponse();
+    if (!current) return;
+    emit(current);
+
+    if (isGenerating()) {
+      if (settleTimer !== null) clearTimeout(settleTimer);
+      settleTimer = null;
+      return;
+    }
+
+    if (settleTimer !== null) return;
+    const expected = current;
+    settleTimer = setTimeout(() => {
+      settleTimer = null;
+      if (resolved) return;
+      const verified = findResponse();
+      if (!verified) return;
+      if (isGenerating()) {
+        process();
+        return;
+      }
+      if (verified !== expected) {
+        process();
+        return;
+      }
+      finish(verified);
+    }, 1500);
+  };
+
+  try {
+    const composer = findComposer();
+    if (!composer) throw new Error("Claude composer was not found.");
+
+    observer = new MutationObserver(process);
+    observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["aria-busy", "disabled", "class"]
+    });
+
+    setComposer(composer, prompt);
+    await sleep(300);
+
+    const button = findSend();
+    if (button) {
+      button.click();
+    } else {
+      composer.focus();
+      composer.dispatchEvent(new KeyboardEvent("keydown", {
+        key: "Enter", code: "Enter", keyCode: 13, which: 13,
+        bubbles: true, cancelable: true
+      }));
+    }
+
+    process();
+    return { ok: true };
+  } catch (error) {
+    fail(error);
+    return { ok: false, error: error?.message || String(error) };
+  }
+}

@@ -1,18 +1,10 @@
 /*
  * PAIR - browser connection service worker
  *
- * PAIR has one local connection:
- *
- *   Developer app <-> local PAIR bridge <-> PAIR Chrome extension
- *
- * Provider tabs are NOT connected permanently. A provider tab is located
- * only when a request for that provider arrives.
+ * Provider handlers live in extension/providers/*.js.
+ * PAIR keeps one local connection between the extension and the Python
+ * bridge. Provider tabs are located only when a request arrives.
  */
-
-
-/* ================================================================
- * PROVIDERS
- * ================================================================ */
 
 importScripts(
   "providers/chatgpt.js",
@@ -20,7 +12,10 @@ importScripts(
   "providers/gemini.js"
 );
 
-
+/*
+ * Provider page observers send these messages into the extension runtime.
+ * The service worker forwards them over the single PAIR WebSocket.
+ */
 /* ================================================================
  * PAIR BRIDGE CONNECTION
  * ================================================================ */
@@ -37,18 +32,14 @@ const HTTP_URL =
 const WATCHDOG_ALARM =
   "pair_bridge_watchdog";
 
-const RECONNECT_DELAY_MS =
-  2000;
+const RECONNECT_DELAY_MS = 2000;
 
 const ENABLED_KEY =
   "pairEnabled";
 
 let socket = null;
-
 let reconnectTimer = null;
-
-let bridgeCheckInProgress =
-  false;
+let bridgeCheckInProgress = false;
 
 let activeProvider =
   "chatgpt";
@@ -198,19 +189,13 @@ async function getProviderTabs() {
 
     result[provider].push({
       tabId: tab.id,
-
-      windowId:
-        tab.windowId,
-
+      windowId: tab.windowId,
       title:
         tab.title || "",
-
       url:
         tab.url || "",
-
       active:
         Boolean(tab.active),
-
       usable:
         isProviderTabUsable(
           provider,
@@ -442,6 +427,19 @@ function scheduleReconnect() {
 /*
  * Check whether the Python bridge is actually running BEFORE creating
  * a WebSocket.
+ *
+ * This is the important fix.
+ *
+ * If Python has called client.close(), port 8765 is closed.
+ * Instead of doing:
+ *
+ *     new WebSocket(...)
+ *
+ * and producing:
+ *
+ *     ERR_CONNECTION_REFUSED
+ *
+ * we simply wait and retry later.
  */
 async function isBridgeReachable() {
   if (
@@ -483,6 +481,13 @@ async function isBridgeReachable() {
       );
     }
   } catch (_) {
+    /*
+     * Bridge is not running.
+     *
+     * Deliberately do NOT log an error here.
+     *
+     * This is normal when the Python client has been closed.
+     */
     return false;
   } finally {
     bridgeCheckInProgress =
@@ -570,7 +575,14 @@ async function connectToBridge() {
   const reachable =
     await isBridgeReachable();
 
-  if (!reachable) {
+  if (
+    !reachable
+  ) {
+    /*
+     * Do not report this as an error.
+     *
+     * The bridge may simply not be running yet.
+     */
     lastConnectionError =
       null;
 
@@ -640,8 +652,7 @@ async function connectToBridge() {
           "PAIR",
 
         version:
-          chrome.runtime
-            .getManifest()
+          chrome.runtime.getManifest()
             .version,
       });
     }
@@ -680,8 +691,8 @@ async function connectToBridge() {
       /*
        * IMPORTANT:
        *
-       * Only the currently active socket is allowed
-       * to modify the global socket state.
+       * Only the currently active socket is allowed to modify
+       * the global socket state.
        */
       if (
         socket ===
@@ -693,6 +704,12 @@ async function connectToBridge() {
         if (
           pairEnabled
         ) {
+          /*
+           * Don't display connection errors for a normal
+           * bridge shutdown/restart.
+           *
+           * The watchdog will reconnect when the bridge returns.
+           */
           lastConnectionError =
             null;
 
@@ -707,7 +724,10 @@ async function connectToBridge() {
     "error",
     () => {
       /*
-       * The close event handles reconnecting.
+       * WebSocket errors are intentionally not surfaced as
+       * noisy extension errors.
+       *
+       * The close event will schedule the reconnect.
        */
       if (
         socket ===
@@ -856,7 +876,7 @@ async function handleChatRequest(
       sendChatError(
         requestId,
 
-        `${providerConfig.name} is not open. Open ${providerConfig.name} in a Chrome tab and try again.`,
+        `${providerConfig.name} is not open. Open ${providerConfig.name} in a Browser tab and try again.`,
 
         "provider_not_open",
 
@@ -890,22 +910,45 @@ async function handleChatRequest(
 
 
     /*
-     * ChatGPT now uses the single:
+     * True browser-side streaming.
      *
-     *     providers/chatgpt.js
-     *
-     * file. That file contains both the provider
-     * wrapper and the injected page-side logic.
+     * Each provider's page observer emits incremental deltas while the
+     * provider is generating. The final event has done=true.
      */
-    if (
-      provider === "chatgpt" &&
-      typeof handler.startMessage ===
-        "function"
-    ) {
-      await handler.startMessage(
-        tab.tabId,
+    if (message.stream) {
+      if (
+        provider === "chatgpt" &&
+        typeof handler.startMessage === "function"
+      ) {
+        await handler.startMessage(
+          tab.tabId,
+          requestId,
+          message.messages,
+          true
+        );
+        return;
+      }
+
+      if (
+        typeof handler.startStreamMessage === "function"
+      ) {
+        await handler.startStreamMessage(
+          tab.tabId,
+          requestId,
+          message.messages
+        );
+        return;
+      }
+
+      sendChatError(
         requestId,
-        message.messages
+        `${providerConfig.name} streaming is not implemented yet.`,
+        "stream_not_supported",
+        provider
+      );
+
+      await releaseProviderDebugger(
+        selectedTabId
       );
 
       return;
@@ -913,7 +956,7 @@ async function handleChatRequest(
 
 
     /*
-     * Claude/Gemini return only after their
+     * Claude/Gemini providers return only after their
      * response is complete.
      */
     const content =
@@ -970,6 +1013,92 @@ chrome.runtime.onMessage.addListener(
     sender,
     sendResponse
   ) => {
+
+    /* ------------------------------------------------------------
+     * Provider streaming chunk
+     *
+     * Handle provider messages in this listener so they never
+     * fall through to handlePopupMessage().
+     * ------------------------------------------------------------ */
+    if (
+      message?.type ===
+      "pair_provider_stream_chunk"
+    ) {
+      if (
+        message.requestId &&
+        message.provider
+      ) {
+        sendSocketMessage({
+          type:
+            "chat_stream_chunk",
+          requestId:
+            message.requestId,
+          provider:
+            message.provider,
+          content:
+            message.content || "",
+          done:
+            Boolean(message.done),
+        });
+
+        if (
+          message.done &&
+          sender?.tab?.id != null
+        ) {
+          releaseProviderDebugger(
+            sender.tab.id
+          ).catch(() => {});
+        }
+      }
+
+      sendResponse({
+        ok: true,
+      });
+
+      return false;
+    }
+
+
+    /* ------------------------------------------------------------
+     * Provider streaming error
+     * ------------------------------------------------------------ */
+    if (
+      message?.type ===
+      "pair_provider_stream_error"
+    ) {
+      if (
+        message.requestId &&
+        message.provider
+      ) {
+        sendSocketMessage({
+          type:
+            "chat_stream_error",
+          requestId:
+            message.requestId,
+          provider:
+            message.provider,
+          error:
+            message.error ||
+            `${message.provider} streaming failed.`,
+          errorCode:
+            message.errorCode ||
+            "provider_error",
+        });
+
+        if (sender?.tab?.id != null) {
+          releaseProviderDebugger(
+            sender.tab.id
+          ).catch(() => {});
+        }
+      }
+
+      sendResponse({
+        ok: true,
+      });
+
+      return false;
+    }
+
 
     if (
       message?.type ===

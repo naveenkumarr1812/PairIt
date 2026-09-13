@@ -7,6 +7,7 @@ import threading
 import time
 import uuid
 from concurrent.futures import Future
+from queue import Empty, Queue
 from typing import Any
 
 from aiohttp import web
@@ -65,6 +66,11 @@ class BridgeServer:
         self._pending: dict[
             str,
             Future[dict[str, Any]],
+        ] = {}
+
+        self._pending_streams: dict[
+            str,
+            Queue[dict[str, Any]],
         ] = {}
 
         self._pending_lock = threading.Lock()
@@ -275,8 +281,12 @@ class BridgeServer:
             pending = list(
                 self._pending.values()
             )
+            pending_streams = list(
+                self._pending_streams.values()
+            )
 
             self._pending.clear()
+            self._pending_streams.clear()
 
         for future in pending:
             if not future.done():
@@ -285,6 +295,14 @@ class BridgeServer:
                         "PAIR bridge stopped."
                     )
                 )
+
+        for stream_queue in pending_streams:
+            stream_queue.put(
+                {
+                    "type": "chat_stream_error",
+                    "error": "PAIR bridge stopped.",
+                }
+            )
 
         if self._runner is not None:
             try:
@@ -510,6 +528,146 @@ class BridgeServer:
                 "provider": provider,
             }
 
+
+    def chat_stream(
+        self,
+        *,
+        provider: str,
+        messages: list[dict[str, str]],
+        model: str = "chat-window",
+        timeout: float | None = None,
+    ):
+        """
+        Stream incremental browser response chunks.
+
+        There is no default generation timeout. The iterator blocks until the
+        extension reports completion. If timeout is supplied, it applies to
+        waiting for each stream event.
+        """
+        if provider not in PROVIDERS:
+            raise ValueError(
+                f"Unsupported provider: {provider}"
+            )
+
+        if not messages:
+            raise ValueError(
+                "messages must not be empty."
+            )
+
+        if not self.extension_connected:
+            connected = self.wait_for_extension(timeout=None)
+
+            if not connected:
+                raise ExtensionNotConnectedError(
+                    "PAIR Chrome extension is not connected."
+                )
+
+        with self._chat_lock:
+            if not self.extension_connected:
+                raise ExtensionNotConnectedError(
+                    "Chrome extension disconnected "
+                    "before the request started."
+                )
+
+            request_id = (
+                f"pair_"
+                f"{int(time.time() * 1000)}_"
+                f"{uuid.uuid4().hex[:8]}"
+            )
+
+            stream_queue: Queue[dict[str, Any]] = Queue()
+
+            with self._pending_lock:
+                self._pending_streams[request_id] = stream_queue
+
+            payload = {
+                "type": "chat_request",
+                "requestId": request_id,
+                "provider": provider,
+                "model": model,
+                "messages": messages,
+                "stream": True,
+            }
+
+            loop = self._loop
+
+            if loop is None or not loop.is_running():
+                self._remove_pending_stream(request_id)
+                raise RuntimeError(
+                    "PAIR bridge is not running."
+                )
+
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_to_extension(payload),
+                loop,
+            )
+
+            try:
+                send_future.result(timeout=5)
+            except Exception:
+                self._remove_pending_stream(request_id)
+                raise
+
+            try:
+                while True:
+                    try:
+                        event = stream_queue.get(
+                            timeout=timeout
+                        )
+                    except Empty as exc:
+                        if timeout is None:
+                            raise
+
+                        raise ChatTimeoutError(
+                            f"Timed out waiting for "
+                            f"{provider} stream after "
+                            f"{timeout:.0f} seconds."
+                        ) from exc
+
+                    event_type = event.get("type")
+
+                    if event_type == "chat_stream_error":
+                        error = str(
+                            event.get("error")
+                            or f"{provider} streaming failed."
+                        )
+
+                        if event.get("errorCode") == "provider_not_open":
+                            raise ProviderNotOpenError(error)
+
+                        raise ProviderError(error)
+
+                    if event_type != "chat_stream_chunk":
+                        continue
+
+                    if event.get("error"):
+                        error = str(event["error"])
+
+                        if event.get("errorCode") == "provider_not_open":
+                            raise ProviderNotOpenError(error)
+
+                        raise ProviderError(error)
+
+                    yield {
+                        "id": request_id,
+                        "object": "chat.completion.chunk",
+                        "created": int(time.time()),
+                        "model": model,
+                        "content": str(
+                            event.get("content") or ""
+                        ),
+                        "provider": provider,
+                        "done": bool(
+                            event.get("done", False)
+                        ),
+                    }
+
+                    if event.get("done"):
+                        break
+
+            finally:
+                self._remove_pending_stream(request_id)
+
     # ------------------------------------------------------------------
     # HTTP handlers
     # ------------------------------------------------------------------
@@ -522,7 +680,7 @@ class BridgeServer:
         return self._json_response(
             {
                 "name": "PAIR",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "status": "running",
                 "extensionConnected": (
                     self.extension_connected
@@ -1054,6 +1212,46 @@ class BridgeServer:
             return
 
         # --------------------------------------------------------------
+        # Chat stream chunk
+        # --------------------------------------------------------------
+
+        if message_type == "chat_stream_chunk":
+            request_id = message.get("requestId")
+
+            if not request_id:
+                return
+
+            with self._pending_lock:
+                stream_queue = self._pending_streams.get(
+                    request_id
+                )
+
+            if stream_queue is not None:
+                stream_queue.put(message)
+
+            return
+
+        # --------------------------------------------------------------
+        # Chat stream error
+        # --------------------------------------------------------------
+
+        if message_type == "chat_stream_error":
+            request_id = message.get("requestId")
+
+            if not request_id:
+                return
+
+            with self._pending_lock:
+                stream_queue = self._pending_streams.get(
+                    request_id
+                )
+
+            if stream_queue is not None:
+                stream_queue.put(message)
+
+            return
+
+        # --------------------------------------------------------------
         # Chat response
         # --------------------------------------------------------------
 
@@ -1066,10 +1264,37 @@ class BridgeServer:
             if not request_id:
                 return
 
+            # A provider-not-open/provider-error response is sent as a
+            # normal chat_response by the extension. Streaming requests use
+            # a Queue instead of a Future, so route chat_response messages
+            # into the matching stream queue as well.
             with self._pending_lock:
+                stream_queue = self._pending_streams.get(
+                    request_id
+                )
                 future = self._pending.get(
                     request_id
                 )
+
+            if stream_queue is not None:
+                if message.get("error"):
+                    stream_queue.put({
+                        "type": "chat_stream_error",
+                        "requestId": request_id,
+                        "provider": message.get("provider"),
+                        "error": message.get("error"),
+                        "errorCode": message.get("errorCode"),
+                    })
+                else:
+                    stream_queue.put({
+                        "type": "chat_stream_chunk",
+                        "requestId": request_id,
+                        "provider": message.get("provider"),
+                        "content": message.get("content") or "",
+                        "done": True,
+                    })
+
+                return
 
             if (
                 future is not None
@@ -1147,6 +1372,17 @@ class BridgeServer:
 
         with self._pending_lock:
             self._pending.pop(
+                request_id,
+                None,
+            )
+
+    def _remove_pending_stream(
+        self,
+        request_id: str,
+    ) -> None:
+
+        with self._pending_lock:
+            self._pending_streams.pop(
                 request_id,
                 None,
             )

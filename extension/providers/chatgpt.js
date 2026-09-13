@@ -1,7 +1,12 @@
 var ChatGPTProvider = globalThis.ChatGPTProvider || {
   name: "chatgpt",
 
-  async startMessage(tabId, requestId, messages) {
+  async startMessage(
+    tabId,
+    requestId,
+    messages,
+    stream = false
+  ) {
     if (!Number.isInteger(tabId)) {
       throw new Error("Invalid ChatGPT tab ID.");
     }
@@ -19,26 +24,125 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
       files: ["providers/chatgpt.js"],
     });
 
-    const response = await chrome.tabs.sendMessage(
-      tabId,
-      {
-        type: "pair_chatgpt_start",
-        requestId,
-        messages,
-      }
-    );
+    let completionPromise = null;
 
-    if (!response || response.ok !== true) {
-      throw new Error(
-        response?.error ||
-        "ChatGPT content script could not start the request."
-      );
+    if (!stream) {
+      completionPromise = new Promise((resolve, reject) => {
+        chatGPTPendingRequests.set(
+          requestId,
+          { resolve, reject }
+        );
+      });
     }
 
-    return true;
+    try {
+      const response = await chrome.tabs.sendMessage(
+        tabId,
+        {
+          type: "pair_chatgpt_start",
+          requestId,
+          messages,
+          stream,
+        }
+      );
+
+      if (!response || response.ok !== true) {
+        throw new Error(
+          response?.error ||
+          "ChatGPT content script could not start the request."
+        );
+      }
+    } catch (error) {
+      chatGPTPendingRequests.delete(requestId);
+      throw error;
+    }
+
+    if (stream) {
+      return true;
+    }
+
+    return await completionPromise;
   },
 };
 
+const chatGPTPendingRequests = new Map();
+
+/*
+ * Results for non-streaming ChatGPT requests are awaited by
+ * ChatGPTProvider.startMessage().
+ */
+if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (
+      message?.provider !== "chatgpt" ||
+      !message?.requestId
+    ) {
+      return;
+    }
+
+    if (message.type === "pair_provider_result") {
+      const pending =
+        chatGPTPendingRequests.get(message.requestId);
+
+      if (pending) {
+        chatGPTPendingRequests.delete(message.requestId);
+        pending.resolve(message.content || "");
+      }
+
+      return;
+    }
+
+    if (message.type === "pair_provider_error") {
+      const pending =
+        chatGPTPendingRequests.get(message.requestId);
+
+      if (pending) {
+        chatGPTPendingRequests.delete(message.requestId);
+
+        const error = new Error(
+          message.error || "ChatGPT request failed."
+        );
+
+        error.errorCode = message.errorCode;
+        pending.reject(error);
+      }
+    }
+  });
+}
+
+/*
+ * Non-streaming results are forwarded here because ChatGPTProvider.startMessage
+ * uses the same page events to complete its promise.
+ */
+if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (
+      message?.provider !== "chatgpt" ||
+      !message?.requestId
+    ) {
+      return;
+    }
+
+    if (message.type === "pair_provider_result") {
+      sendSocketMessage({
+        type: "chat_response",
+        requestId: message.requestId,
+        provider: "chatgpt",
+        content: message.content || "",
+      });
+    }
+
+    if (message.type === "pair_provider_error") {
+      sendSocketMessage({
+        type: "chat_response",
+        requestId: message.requestId,
+        provider: "chatgpt",
+        error: message.error || "ChatGPT request failed.",
+        errorCode: message.errorCode,
+      });
+    }
+  });
+}
 
 /* ================================================================
  * CHATGPT PAGE / CONTENT SCRIPT
@@ -110,6 +214,8 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
 
         observer: null,
 
+        pollTimer: null,
+
         settleTimer: null,
 
         submitted: false,
@@ -117,6 +223,10 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
         resolved: false,
 
         lastObservedText: "",
+
+        lastStreamText: "",
+
+        stream: Boolean(message.stream),
 
         text: "",
       };
@@ -166,6 +276,15 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
           );
         }
       );
+
+      /*
+       * MutationObserver is fast, but provider UIs can occasionally batch
+       * DOM updates while Chrome is minimized/backgrounded. Keep a small
+       * polling loop as a reliable fallback for streaming.
+       */
+      request.pollTimer = setInterval(() => {
+        processRequest(request);
+      }, 100);
 
 
       sendResponse({
@@ -314,9 +433,19 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
 
 
     /*
+     * In stream mode, emit each newly rendered suffix immediately.
+     * This is true browser-side streaming: the extension forwards DOM
+     * changes while ChatGPT is generating instead of splitting the final
+     * answer after generation has completed.
+     */
+    if (request.stream) {
+      emitStreamDelta(request, text);
+    }
+
+    /*
      * IMPORTANT:
      *
-     * Do not return anything while ChatGPT is
+     * Do not finish the request while ChatGPT is
      * still generating.
      */
     if (isStillGenerating(latest)) {
@@ -327,7 +456,6 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
 
       return;
     }
-
 
     /*
      * ChatGPT may expose a partial response before
@@ -352,6 +480,48 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
      * Perform another verification.
      */
     scheduleSettleCheck(request);
+  }
+
+
+  function emitStreamDelta(request, text) {
+    if (request.resolved || !request.stream) {
+      return;
+    }
+
+    if (text === request.lastStreamText) {
+      return;
+    }
+
+    let delta = "";
+
+    if (text.startsWith(request.lastStreamText)) {
+      delta = text.slice(
+        request.lastStreamText.length
+      );
+    } else {
+      /*
+       * If the provider rewrites already-rendered Markdown, prefix
+       * diffing is no longer possible. Emit the new visible text rather
+       * than silently dropping it.
+       */
+      delta = text;
+    }
+
+    request.lastStreamText = text;
+
+    if (!delta) {
+      return;
+    }
+
+    chrome.runtime
+      .sendMessage({
+        type: "pair_provider_stream_chunk",
+        provider: "chatgpt",
+        requestId: request.requestId,
+        content: delta,
+        done: false,
+      })
+      .catch(() => {});
   }
 
 
@@ -774,32 +944,44 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
     request.observer =
       null;
 
+    if (request.pollTimer !== null) {
+      clearInterval(request.pollTimer);
+      request.pollTimer = null;
+    }
 
     activeRequests.delete(
       request.requestId
     );
 
 
-    /*
-     * Send ONLY the complete response
-     * back to background.js.
-     */
+    if (request.stream) {
+      /*
+       * Make one final delta pass in case the last DOM mutation happened
+       * just before the settle timer fired.
+       */
+      emitStreamDelta(request, content);
+
+      chrome.runtime
+        .sendMessage({
+          type: "pair_provider_stream_chunk",
+          provider: "chatgpt",
+          requestId: request.requestId,
+          content: "",
+          done: true,
+        })
+        .catch(() => {});
+
+      return;
+    }
+
     chrome.runtime
       .sendMessage({
-        type:
-          "pair_provider_result",
-
-        provider:
-          "chatgpt",
-
-        requestId:
-          request.requestId,
-
+        type: "pair_provider_result",
+        provider: "chatgpt",
+        requestId: request.requestId,
         content,
       })
-      .catch(
-        () => {}
-      );
+      .catch(() => {});
   }
 
 
@@ -829,6 +1011,10 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
     request.observer =
       null;
 
+    if (request.pollTimer !== null) {
+      clearInterval(request.pollTimer);
+      request.pollTimer = null;
+    }
 
     activeRequests.delete(
       request.requestId
@@ -838,7 +1024,9 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
     chrome.runtime
       .sendMessage({
         type:
-          "pair_provider_error",
+          request.stream
+            ? "pair_provider_stream_error"
+            : "pair_provider_error",
 
         provider:
           "chatgpt",
