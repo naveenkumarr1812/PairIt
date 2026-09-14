@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/bridge-Prompter/main/assets/logo.png" alt="PAIR – Personal AI Router" width="480"/>
+  <img src="https://raw.githubusercontent.com/naveenkumarr1812/Personal-AI-Router/main/assets/logo.png" alt="PAIR – Personal AI Router" width="480"/>
 </p>
 
 <p align="center">

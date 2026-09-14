@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "personal-ai-router"
-version = "0.3.7"
+version = "0.3.8"
 description = "Route your Python app through your already-logged-in browser AI tabs — no API keys needed."
 readme = "README.md"
 license = "MIT"
@@ -29,9 +29,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/naveenkumarr1812/bridge-Prompter"
-Repository = "https://github.com/naveenkumarr1812/bridge-Prompter"
-Issues = "https://github.com/naveenkumarr1812/bridge-Prompter/issues"
+Homepage = "https://github.com/naveenkumarr1812/Personal-AI-Router"
+Repository = "https://github.com/naveenkumarr1812/Personal-AI-Router"
+Issues = "https://github.com/naveenkumarr1812/Personal-AI-Router/issues"
 
 [tool.setuptools.packages.find]
 include = ["pair*"]
