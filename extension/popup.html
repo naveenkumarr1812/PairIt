@@ -18,16 +18,32 @@
       box-sizing: border-box;
     }
 
-    h2 {
-      margin: 0;
-      font-size: 20px;
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
-    .subtitle {
-      margin: 4px 0 16px;
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.15));
+    }
+
+    .header-text h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .header-text .subtitle {
+      margin: 2px 0 0;
       opacity: 0.7;
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 11px;
+      line-height: 1.3;
     }
 
     .status {
@@ -114,9 +130,12 @@
   </style>
 </head>
 <body>
-  <h2>PAIR - Personal AI Router</h2>
-  <div class="subtitle">
-    Local development ↔ browser AI sessions
+  <div class="header">
+    <img src="icons/icon48.png" alt="PAIR" class="brand-logo">
+    <div class="header-text">
+      <h2>PAIR</h2>
+      <div class="subtitle">Personal AI Router</div>
+    </div>
   </div>
 
   <div class="status" id="status">
