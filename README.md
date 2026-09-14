@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Route your Python app through your already-logged-in browser AI tabs — no API keys, no extra accounts.</strong>
+  <strong>Turn your browser AI sessions into a local development interface</strong>
 </p>
 
 <p align="center">
