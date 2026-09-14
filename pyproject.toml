@@ -3,14 +3,35 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pair"
+name = "personal-ai-router"
 version = "0.3.7"
-description = "PAIR local bridge for using authorized browser AI sessions from Python applications."
+description = "Route your Python app through your already-logged-in browser AI tabs — no API keys needed."
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
+authors = [
+    { name = "Naveen Kumar" },
+]
+keywords = ["ai", "chatgpt", "claude", "gemini", "browser", "bridge", "router", "chrome-extension"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "aiohttp>=3.9,<4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/naveenkumarr1812/bridge-Prompter"
+Repository = "https://github.com/naveenkumarr1812/bridge-Prompter"
+Issues = "https://github.com/naveenkumarr1812/bridge-Prompter/issues"
 
 [tool.setuptools.packages.find]
 include = ["pair*"]
