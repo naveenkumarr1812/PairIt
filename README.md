@@ -76,11 +76,11 @@ pip install personal-ai-router
 
 ### 2. Load the Chrome extension
 
-1. Clone or download this repository.
-2. Open Chrome and navigate to `chrome://extensions/`.
-3. Enable **Developer mode** (top-right toggle).
-4. Click **Load unpacked** and select the `extension/` folder.
-5. Pin the **PAIR** extension to your toolbar.
+The easiest option is to install PAIR directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
+
+1. Open the [PAIR Chrome Web Store listing](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
+2. Click **Add to Chrome** and confirm the installation.
+3. Pin the **PAIR** extension to your toolbar.
 
 ---
 
