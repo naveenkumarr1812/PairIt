@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/logo.png" alt="pAIrit – Your Code. Your Browser. Your AI." width="600"/>
+  <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/logo.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600"/>
 </p>
 
 <p align="center">
@@ -15,11 +15,11 @@
 
 ---
 
-## What is pAIrit?
+## What is PairIt?
 
-**pAIrit** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, pAIrit routes it to the right browser tab, and streams the answer back.
+**PairIt** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, PairIt routes it to the right browser tab, and streams the answer back.
 
-> **Note:** pAIrit is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
+> **Note:** PairIt is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
 
 ---
 
@@ -147,7 +147,7 @@ A provider does **not** need to be permanently connected — it only needs to be
 
 ## Safety & Scope
 
-pAIrit is a development-only tool. It **does not**:
+PairIt is a development-only tool. It **does not**:
 
 - ❌ Extract or store cookies
 - ❌ Bypass authentication
@@ -171,5 +171,5 @@ Contributions are welcome! For substantial changes, please open an issue first t
 ---
 
 <p align="center">
-  Made with ❤️ by pAIrit contributors
+  Made with ❤️ by PairIt contributors
 </p>

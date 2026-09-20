@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pairit"
 version = "0.4.0"
-description = "Turn your browser AI sessions into a local development interface"
+description = "pairit – connect your local Python code to ChatGPT, Claude, and Gemini via your browser"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
