@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/Personal-AI-Router/main/assets/logo.png" alt="pairit – Your Code. Your Browser. Your AI." width="600"/>
+  <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/logo.png" alt="pAIrit – Your Code. Your Browser. Your AI." width="600"/>
 </p>
 
 <p align="center">
@@ -15,11 +15,11 @@
 
 ---
 
-## What is pairit?
+## What is pAIrit?
 
-**pairit** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, pairit routes it to the right browser tab, and streams the answer back.
+**pAIrit** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, pAIrit routes it to the right browser tab, and streams the answer back.
 
-> **Note:** pairit is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
+> **Note:** pAIrit is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
 
 ---
 
@@ -37,7 +37,7 @@ Your Python Application
         │
         │  Persistent connection
         ▼
-  pairit Chrome Extension
+  PairIt Chrome Extension
     ┌────┴────┬───────┐
     ▼         ▼       ▼
  ChatGPT   Claude   Gemini
@@ -48,7 +48,7 @@ Your Python Application
 
 - Your app opens **one** WebSocket connection to the bridge — not a separate connection per provider.
 - The extension locates a provider tab only when a request for that provider arrives.
-- If the required tab is missing, pairit returns a clear error:
+- If the required tab is missing, PairIt returns a clear error:
   `Claude is not open. Open Claude in a Chrome tab and try again.`
 
 ---
@@ -76,11 +76,11 @@ pip install pairit
 
 ### 2. Load the Chrome extension
 
-The easiest option is to install pairit directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
+The easiest option is to install PairIt directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
 
 1. Open the [Chrome Web Store listing](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
 2. Click **Add to Chrome** and confirm the installation.
-3. Pin the **pairit** extension to your toolbar.
+3. Pin the **PairIt** extension to your toolbar.
 
 ---
 
@@ -123,8 +123,8 @@ finally:
 
 1. **Run** your Python script — the bridge starts automatically.
 2. **Open** the required AI provider tabs in Chrome and stay logged in.
-3. **Open** the pairit extension popup and toggle it **ON**.
-4. pairit continuously attempts to connect to the bridge while the toggle is on.
+3. **Open** the PairIt extension popup and toggle it **ON**.
+4. PairIt continuously attempts to connect to the bridge while the toggle is on.
 5. **Send** requests from your code — pairit handles routing.
 6. When finished, toggle the extension **OFF**.
 
@@ -134,7 +134,7 @@ finally:
 
 ## Status Model
 
-pairit tracks two independent states:
+PairIt tracks two independent states:
 
 | State | Description |
 |---|---|
@@ -147,7 +147,7 @@ A provider does **not** need to be permanently connected — it only needs to be
 
 ## Safety & Scope
 
-pairit is a development-only tool. It **does not**:
+pAIrit is a development-only tool. It **does not**:
 
 - ❌ Extract or store cookies
 - ❌ Bypass authentication
@@ -159,7 +159,7 @@ pairit is a development-only tool. It **does not**:
 ## Requirements
 
 - Python **≥ 3.10**
-- Google Chrome (with the pairit extension loaded)
+- Google Chrome (with the PairIt extension loaded)
 - Active browser sessions for the AI providers you intend to use
 
 ---
@@ -171,5 +171,5 @@ Contributions are welcome! For substantial changes, please open an issue first t
 ---
 
 <p align="center">
-  Made with ❤️ by pairit contributors
+  Made with ❤️ by pAIrit contributors
 </p>

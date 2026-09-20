@@ -29,9 +29,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/naveenkumarr1812/Personal-AI-Router"
-Repository = "https://github.com/naveenkumarr1812/Personal-AI-Router"
-Issues = "https://github.com/naveenkumarr1812/Personal-AI-Router/issues"
+Homepage = "https://github.com/naveenkumarr1812/PairIt"
+Repository = "https://github.com/naveenkumarr1812/PairIt"
+Issues = "https://github.com/naveenkumarr1812/PairIt/issues"
 
 [tool.setuptools.packages.find]
 include = ["pairit*", "pair*"]

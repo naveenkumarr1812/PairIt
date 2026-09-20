@@ -649,7 +649,7 @@ async function connectToBridge() {
           "extension_ready",
 
         name:
-          "pairit",
+          "PairIt",
 
         version:
           chrome.runtime.getManifest()

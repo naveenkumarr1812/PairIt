@@ -52,23 +52,23 @@ function render(status) {
   errorEl.textContent = "";
   if (!status.enabled) {
     statusEl.innerHTML =
-      "<strong>pairit is off</strong>Turn it on to connect this browser session to the local development bridge.";
-    toggleEl.textContent = "Turn pairit on";
+      "<strong>PairIt is off</strong>Turn it on to connect this browser session to the local development bridge.";
+    toggleEl.textContent = "Turn PairIt on";
     renderProviders(status.providers);
     return;
   }
 
   if (status.connected) {
     statusEl.innerHTML =
-      "<strong>pairit is connected</strong>Your local development environment is connected to this extension.";
-    toggleEl.textContent = "Turn pairit off";
+      "<strong>PairIt is connected</strong>Your local development environment is connected to this extension.";
+    toggleEl.textContent = "Turn PairIt off";
   } else {
     const connectionError = status.connectionError
       ? `<br><small>${status.connectionError}</small>`
       : "";
     statusEl.innerHTML =
-      `<strong>pairit is on</strong>Waiting for the local development bridge. pairit will keep trying to connect.${connectionError}`;
-    toggleEl.textContent = "Turn pairit off";
+      `<strong>PairIt is on</strong>Waiting for the local development bridge. PairIt will keep trying to connect.${connectionError}`;
+    toggleEl.textContent = "Turn PairIt off";
   }
 
   renderProviders(status.providers);

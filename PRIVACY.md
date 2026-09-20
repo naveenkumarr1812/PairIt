@@ -1,22 +1,22 @@
-# Privacy Policy for pairit
+# Privacy Policy for PairIt
 
 **Last updated:** September 20, 2026
 
-pairit is an open-source browser extension and developer tool designed to bridge local development environments with active browser AI sessions.
+PairIt is an open-source browser extension and developer tool designed to bridge local development environments with active browser AI sessions.
 
 Your privacy is paramount. This Privacy Policy details our practices regarding data collection, handling, and security.
 
 ---
 
 ### 1. Zero Data Collection
-* **No Telemetry or Tracking:** pairit does not collect, track, or record any personally identifiable information (PII), browsing history, analytics, or behavioral data.
-* **No External Servers:** pairit does not operate any remote servers or databases. It does not transmit prompt texts, model responses, or metadata to any third party or to the extension creators.
-* **No Account Required:** Using pairit does not require creating an account or providing email addresses, names, or payment details.
+* **No Telemetry or Tracking:** PairIt does not collect, track, or record any personally identifiable information (PII), browsing history, analytics, or behavioral data.
+* **No External Servers:** PairIt does not operate any remote servers or databases. It does not transmit prompt texts, model responses, or metadata to any third party or to the extension creators.
+* **No Account Required:** Using PairIt does not require creating an account or providing email addresses, names, or payment details.
 
 ---
 
 ### 2. Local-Only Architecture
-* All communications occur strictly on your local device (`localhost` / `127.0.0.1:8765`) over a local WebSocket connection between your local Python application and the pairit browser extension.
+* All communications occur strictly on your local device (`localhost` / `127.0.0.1:8765`) over a local WebSocket connection between your local Python application and the PairIt browser extension.
 * Neither the extension nor the Python library logs, caches, or stores chat conversations or prompts to disk.
 
 ---
@@ -32,16 +32,16 @@ Your privacy is paramount. This Privacy Policy details our practices regarding d
 ---
 
 ### 4. Third-Party Services
-When using pairit to interact with AI services (such as OpenAI's ChatGPT, Anthropic's Claude, or Google's Gemini), your usage remains subject to the respective terms and privacy policies of those independent providers. pairit does not bypass, intercept, or modify their authentication or security mechanisms.
+When using PairIt to interact with AI services (such as OpenAI's ChatGPT, Anthropic's Claude, or Google's Gemini), your usage remains subject to the respective terms and privacy policies of those independent providers. PairIt does not bypass, intercept, or modify their authentication or security mechanisms.
 
 ---
 
 ### 5. Open Source Transparency
-pairit is open-source under the MIT License. You can review the complete source code at any time:  
-[https://github.com/naveenkumarr1812/Personal-AI-Router](https://github.com/naveenkumarr1812/Personal-AI-Router)
+PairIt is open-source under the MIT License. You can review the complete source code at any time:  
+[https://github.com/naveenkumarr1812/PairIt](https://github.com/naveenkumarr1812/PairIt)
 
 ---
 
 ### 6. Contact
 If you have any questions or feedback regarding this Privacy Policy, please open an issue on GitHub:  
-[https://github.com/naveenkumarr1812/Personal-AI-Router/issues](https://github.com/naveenkumarr1812/Personal-AI-Router/issues)
+[https://github.com/naveenkumarr1812/PairIt/issues](https://github.com/naveenkumarr1812/PairIt/issues)
