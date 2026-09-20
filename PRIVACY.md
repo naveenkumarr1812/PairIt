@@ -22,26 +22,26 @@ Your privacy is paramount. This Privacy Policy details our practices regarding d
 ---
 
 ### 3. Permissions Justification
-* **`tabs`:** Used solely to inspect open tabs and detect whether supported AI provider tabs (ChatGPT, Claude, Gemini) are available when requested by your local code.
+* **`tabs`:** Used solely to inspect open tabs and detect whether supported AI provider tabs are available when requested by your local code.
 * **`scripting`:** Used to attach DOM observers to read generated streaming tokens from open provider tabs and return them to your local Python process.
 * **`debugger`:** Used strictly to dispatch synthetic keyboard input events into the prompt textarea of the target AI provider tab.
 * **`storage`:** Used exclusively to remember the local toggle state (ON or OFF) of the extension popup on your device.
 * **`alarms`:** Used to prevent the background service worker from entering sleep mode during extended streaming generation.
-* **Host Permissions:** Restricted strictly to `http://127.0.0.1:8765/*` (local bridge) and official AI provider web applications (`chatgpt.com`, `claude.ai`, `gemini.google.com`).
+* **Host Permissions:** Restricted strictly to `http://127.0.0.1:8765/*` (local bridge) and official AI provider web applications.
 
 ---
 
 ### 4. Third-Party Services
-When using PairIt to interact with AI services (such as OpenAI's ChatGPT, Anthropic's Claude, or Google's Gemini), your usage remains subject to the respective terms and privacy policies of those independent providers. PairIt does not bypass, intercept, or modify their authentication or security mechanisms.
+When using PairIt to interact with AI services, your usage remains subject to the respective terms and privacy policies of those independent providers. PairIt does not bypass, intercept, or modify their authentication or security mechanisms.
 
 ---
 
 ### 5. Open Source Transparency
 PairIt is open-source under the MIT License. You can review the complete source code at any time:  
-[https://github.com/naveenkumarr1812/pairit](https://github.com/naveenkumarr1812/pairit)
+[https://github.com/naveenkumarr1812/PairIt](https://github.com/naveenkumarr1812/PairIt)
 
 ---
 
 ### 6. Contact
 If you have any questions or feedback regarding this Privacy Policy, please open an issue on GitHub:  
-[https://github.com/naveenkumarr1812/pairit/issues](https://github.com/naveenkumarr1812/pairit/issues)
+[https://github.com/naveenkumarr1812/PairIt/issues](https://github.com/naveenkumarr1812/PairIt/issues)

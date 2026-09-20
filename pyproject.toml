@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pairit"
 version = "0.4.0"
-description = "pairit – connect your local Python code to ChatGPT, Claude, and Gemini via your browser"
+description = "PairIt – Your Code. Your Browser. Your AI."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
     { name = "Naveen Kumar" },
 ]
-keywords = ["pairit", "ai", "chatgpt", "claude", "gemini", "browser", "bridge", "router", "chrome-extension"]
+keywords = ["pairit", "PairIt", "ai", "browser", "bridge", "router", "chrome-extension"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -29,9 +29,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/naveenkumarr1812/pairit"
-Repository = "https://github.com/naveenkumarr1812/pairit"
-Issues = "https://github.com/naveenkumarr1812/pairit/issues"
+Homepage = "https://github.com/naveenkumarr1812/PairIt"
+Repository = "https://github.com/naveenkumarr1812/PairIt"
+Issues = "https://github.com/naveenkumarr1812/PairIt/issues"
 
 [tool.setuptools.packages.find]
 include = ["pairit*", "pair*"]

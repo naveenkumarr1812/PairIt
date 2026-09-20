@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/pairit/main/assets/logo.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600"/>
+  <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/logo.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600"/>
 </p>
 
 <p align="center">
-  <strong>Turn your browser AI sessions into a local development interface</strong>
+  <strong>PairIt – Your Code. Your Browser. Your AI.</strong>
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/pypi/v/pairit?color=7C3AED&label=PyPI&style=flat-square" alt="PyPI version"/></a>
+  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/PyPI-v0.4.0-7C3AED?style=flat-square" alt="PyPI version"/></a>
   <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/pypi/pyversions/pairit?color=EA580C&style=flat-square" alt="Python versions"/></a>
   <img src="https://img.shields.io/badge/Chrome%20Extension-MV3-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome MV3"/>
   <img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="License MIT"/>
@@ -17,7 +17,7 @@
 
 ## What is PairIt?
 
-**PairIt** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, PairIt routes it to the right browser tab, and streams the answer back.
+**PairIt** is a developer-focused bridge that lets a local Python application talk to supported AI browser sessions through the tabs you already have open. No API keys, no separate billing; your Python code sends a request, PairIt routes it to the right browser tab, and streams the answer back.
 
 > **Note:** PairIt is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
 
@@ -40,8 +40,7 @@ Your Python Application
   PairIt Chrome Extension
     ┌────┴────┬───────┐
     ▼         ▼       ▼
- ChatGPT   Claude   Gemini
-  (tab)    (tab)    (tab)
+ AI Tab 1  AI Tab 2  AI Tab 3
 ```
 
 **Design highlights:**
@@ -49,7 +48,7 @@ Your Python Application
 - Your app opens **one** WebSocket connection to the bridge — not a separate connection per provider.
 - The extension locates a provider tab only when a request for that provider arrives.
 - If the required tab is missing, PairIt returns a clear error:
-  `Claude is not open. Open Claude in a Chrome tab and try again.`
+  `Provider is not open. Open the AI session in a Chrome tab and try again.`
 
 ---
 
@@ -57,7 +56,7 @@ Your Python Application
 
 | Feature | Details |
 |---|---|
-| 🔄 **Multi-provider** | ChatGPT, Claude, Gemini — switch with one line |
+| 🔄 **Multi-provider** | Switch between supported AI providers with one line |
 | 📡 **Streaming** | Real-time browser-side streaming via DOM observer |
 | 🔐 **No API keys** | Uses your existing logged-in browser sessions |
 | 🪟 **Minimized Chrome** | Bridge stays alive even when Chrome is hidden |
@@ -91,7 +90,7 @@ The easiest option is to install PairIt directly from the [Chrome Web Store](htt
 ```python
 from pairit import Client
 
-client = Client(provider="chatgpt")
+client = Client()
 
 try:
     response = client.chat("Explain async programming in Python")
@@ -105,7 +104,7 @@ finally:
 ```python
 from pairit import Client
 
-client = Client(provider="chatgpt")
+client = Client()
 
 try:
     for chunk in client.chat("Explain Retrieval-Augmented Generation", stream=True):
@@ -139,7 +138,7 @@ PairIt tracks two independent states:
 | State | Description |
 |---|---|
 | **Bridge connection** | Local Python app ↔ Chrome extension (WebSocket) |
-| **Provider availability** | Whether a ChatGPT / Claude / Gemini tab is currently open |
+| **Provider availability** | Whether the target AI session tab is currently open |
 
 A provider does **not** need to be permanently connected — it only needs to be open at the moment a request targets it.
 
