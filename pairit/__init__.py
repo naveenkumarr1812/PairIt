@@ -1,16 +1,14 @@
-"""Backward compatibility alias for pairit."""
-from pairit import (
+from .client import Client
+from .exceptions import (
     BridgeNotRunningError,
-    ChatChunk,
-    ChatResponse,
     ChatTimeoutError,
-    Client,
     ExtensionNotConnectedError,
     PairError,
     PairitError,
     ProviderError,
     ProviderNotOpenError,
 )
+from .types import ChatChunk, ChatResponse
 
 __all__ = [
     "Client",

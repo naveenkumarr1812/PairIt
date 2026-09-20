@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/Personal-AI-Router/main/assets/logo.png" alt="PAIR – Personal AI Router" width="480"/>
+  <img src="https://raw.githubusercontent.com/naveenkumarr1812/Personal-AI-Router/main/assets/logo.png" alt="pairit – Your Code. Your Browser. Your AI." width="600"/>
 </p>
 
 <p align="center">
@@ -7,19 +7,19 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/personal-ai-router/"><img src="https://img.shields.io/pypi/v/personal-ai-router?color=7C3AED&label=PyPI&style=flat-square" alt="PyPI version"/></a>
-  <a href="https://pypi.org/project/personal-ai-router/"><img src="https://img.shields.io/pypi/pyversions/personal-ai-router?color=EA580C&style=flat-square" alt="Python versions"/></a>
+  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/pypi/v/pairit?color=7C3AED&label=PyPI&style=flat-square" alt="PyPI version"/></a>
+  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/pypi/pyversions/pairit?color=EA580C&style=flat-square" alt="Python versions"/></a>
   <img src="https://img.shields.io/badge/Chrome%20Extension-MV3-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome MV3"/>
   <img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="License MIT"/>
 </p>
 
 ---
 
-## What is PAIR?
+## What is pairit?
 
-**PAIR (Personal AI Router)** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, PAIR routes it to the right browser tab, and streams the answer back.
+**pairit** is a developer-focused bridge that lets a local Python application talk to AI services — **ChatGPT, Claude, and Gemini** — through the browser tabs you already have open. No API keys, no separate billing; your Python code sends a request, pairit routes it to the right browser tab, and streams the answer back.
 
-> **Note:** PAIR is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
+> **Note:** pairit is intended for local development workflows where the developer is already authenticated with the AI services in their browser.
 
 ---
 
@@ -29,15 +29,15 @@
 Your Python Application
         │
         ▼
-    PAIR SDK  (pip install personal-ai-router)
+    pairit SDK  (pip install pairit)
         │
         │  WebSocket
         ▼
-  Local PAIR Bridge
+  Local pairit Bridge
         │
         │  Persistent connection
         ▼
-  PAIR Chrome Extension
+  pairit Chrome Extension
     ┌────┴────┬───────┐
     ▼         ▼       ▼
  ChatGPT   Claude   Gemini
@@ -48,7 +48,7 @@ Your Python Application
 
 - Your app opens **one** WebSocket connection to the bridge — not a separate connection per provider.
 - The extension locates a provider tab only when a request for that provider arrives.
-- If the required tab is missing, PAIR returns a clear error:
+- If the required tab is missing, pairit returns a clear error:
   `Claude is not open. Open Claude in a Chrome tab and try again.`
 
 ---
@@ -71,16 +71,16 @@ Your Python Application
 ### 1. Install the Python package
 
 ```bash
-pip install personal-ai-router
+pip install pairit
 ```
 
 ### 2. Load the Chrome extension
 
-The easiest option is to install PAIR directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
+The easiest option is to install pairit directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
 
-1. Open the [PAIR Chrome Web Store listing](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
+1. Open the [Chrome Web Store listing](https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie).
 2. Click **Add to Chrome** and confirm the installation.
-3. Pin the **PAIR** extension to your toolbar.
+3. Pin the **pairit** extension to your toolbar.
 
 ---
 
@@ -89,7 +89,7 @@ The easiest option is to install PAIR directly from the [Chrome Web Store](https
 ### Basic request
 
 ```python
-from pair import Client
+from pairit import Client
 
 client = Client(provider="chatgpt")
 
@@ -103,7 +103,7 @@ finally:
 ### Streaming
 
 ```python
-from pair import Client
+from pairit import Client
 
 client = Client(provider="chatgpt")
 
@@ -123,9 +123,9 @@ finally:
 
 1. **Run** your Python script — the bridge starts automatically.
 2. **Open** the required AI provider tabs in Chrome and stay logged in.
-3. **Open** the PAIR extension popup and toggle it **ON**.
-4. PAIR continuously attempts to connect to the bridge while the toggle is on.
-5. **Send** requests from your code — PAIR handles routing.
+3. **Open** the pairit extension popup and toggle it **ON**.
+4. pairit continuously attempts to connect to the bridge while the toggle is on.
+5. **Send** requests from your code — pairit handles routing.
 6. When finished, toggle the extension **OFF**.
 
 > The extension does **not** auto-enable on a new Chrome session. You must turn it on manually to keep control explicit.
@@ -134,7 +134,7 @@ finally:
 
 ## Status Model
 
-PAIR tracks two independent states:
+pairit tracks two independent states:
 
 | State | Description |
 |---|---|
@@ -147,7 +147,7 @@ A provider does **not** need to be permanently connected — it only needs to be
 
 ## Safety & Scope
 
-PAIR is a development-only tool. It **does not**:
+pairit is a development-only tool. It **does not**:
 
 - ❌ Extract or store cookies
 - ❌ Bypass authentication
@@ -159,7 +159,7 @@ PAIR is a development-only tool. It **does not**:
 ## Requirements
 
 - Python **≥ 3.10**
-- Google Chrome (with the PAIR extension loaded)
+- Google Chrome (with the pairit extension loaded)
 - Active browser sessions for the AI providers you intend to use
 
 ---
@@ -171,5 +171,5 @@ Contributions are welcome! For substantial changes, please open an issue first t
 ---
 
 <p align="center">
-  Made with ❤️ by PAIR contributors
+  Made with ❤️ by pairit contributors
 </p>

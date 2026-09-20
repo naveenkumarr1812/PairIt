@@ -3,8 +3,8 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "personal-ai-router"
-version = "0.3.10"
+name = "pairit"
+version = "0.4.0"
 description = "Turn your browser AI sessions into a local development interface"
 readme = "README.md"
 license = "MIT"
@@ -12,7 +12,7 @@ requires-python = ">=3.10"
 authors = [
     { name = "Naveen Kumar" },
 ]
-keywords = ["ai", "chatgpt", "claude", "gemini", "browser", "bridge", "router", "chrome-extension"]
+keywords = ["pairit", "ai", "chatgpt", "claude", "gemini", "browser", "bridge", "router", "chrome-extension"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -34,4 +34,4 @@ Repository = "https://github.com/naveenkumarr1812/Personal-AI-Router"
 Issues = "https://github.com/naveenkumarr1812/Personal-AI-Router/issues"
 
 [tool.setuptools.packages.find]
-include = ["pair*"]
+include = ["pairit*", "pair*"]

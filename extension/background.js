@@ -1,8 +1,8 @@
 /*
- * PAIR - browser connection service worker
+ * pairit - browser connection service worker
  *
  * Provider handlers live in extension/providers/*.js.
- * PAIR keeps one local connection between the extension and the Python
+ * pairit keeps one local connection between the extension and the Python
  * bridge. Provider tabs are located only when a request arrives.
  */
 
@@ -14,10 +14,10 @@ importScripts(
 
 /*
  * Provider page observers send these messages into the extension runtime.
- * The service worker forwards them over the single PAIR WebSocket.
+ * The service worker forwards them over the single pairit WebSocket.
  */
 /* ================================================================
- * PAIR BRIDGE CONNECTION
+ * pairit BRIDGE CONNECTION
  * ================================================================ */
 
 const BRIDGE_HOST = "127.0.0.1";
@@ -346,7 +346,7 @@ async function releaseProviderDebugger(
     );
   } catch (error) {
     console.warn(
-      "PAIR could not detach debugger:",
+      "pairit could not detach debugger:",
       error
     );
   }
@@ -517,7 +517,7 @@ function sendSocketMessage(
     return true;
   } catch (error) {
     console.warn(
-      "PAIR could not send bridge message:",
+      "pairit could not send bridge message:",
       error
     );
 
@@ -542,7 +542,7 @@ function closeBridgeConnection() {
   try {
     currentSocket.close(
       1000,
-      "PAIR disabled"
+      "pairit disabled"
     );
   } catch (_) {}
 }
@@ -551,7 +551,7 @@ function closeBridgeConnection() {
 /*
  * Connect to bridge only when:
  *
- * 1. PAIR is enabled
+ * 1. pairit is enabled
  * 2. There isn't already an OPEN/CONNECTING socket
  * 3. The local bridge is actually reachable
  */
@@ -608,7 +608,7 @@ async function connectToBridge() {
   }
 
   console.log(
-    "PAIR connecting to local development bridge..."
+    "pairit connecting to local development bridge..."
   );
 
   const newSocket =
@@ -641,7 +641,7 @@ async function connectToBridge() {
         null;
 
       console.log(
-        "PAIR connected to local development bridge."
+        "pairit connected to local development bridge."
       );
 
       sendSocketMessage({
@@ -649,7 +649,7 @@ async function connectToBridge() {
           "extension_ready",
 
         name:
-          "PAIR",
+          "pairit",
 
         version:
           chrome.runtime.getManifest()
@@ -673,7 +673,7 @@ async function connectToBridge() {
         );
       } catch (error) {
         console.error(
-          "PAIR failed to process bridge message:",
+          "pairit failed to process bridge message:",
           error
         );
       }
@@ -685,7 +685,7 @@ async function connectToBridge() {
     "close",
     () => {
       console.log(
-        "PAIR disconnected from local development bridge."
+        "pairit disconnected from local development bridge."
       );
 
       /*
@@ -776,7 +776,7 @@ async function handleServerMessage(
 
     default:
       console.log(
-        "PAIR received unknown bridge message:",
+        "pairit received unknown bridge message:",
         message
       );
   }
@@ -826,7 +826,7 @@ async function handleChatRequest(
     sendChatError(
       requestId,
 
-      "PAIR is not connected to the local development bridge.",
+      "pairit is not connected to the local development bridge.",
 
       "bridge_not_connected",
 
@@ -1213,7 +1213,7 @@ chrome.runtime.onMessage.addListener(
       .catch(
         (error) => {
           console.error(
-            "PAIR popup message error:",
+            "pairit popup message error:",
             error
           );
 
@@ -1445,7 +1445,7 @@ chrome.runtime.onStartup.addListener(
   async () => {
 
     /*
-     * PAIR must be manually enabled for each
+     * pairit must be manually enabled for each
      * new Chrome session.
      */
     pairEnabled =

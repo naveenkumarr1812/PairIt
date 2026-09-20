@@ -39,3 +39,6 @@ extension/build/
 
 # Package manager cache
 .npm/
+
+# Extension releases
+*.zip

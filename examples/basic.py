@@ -1,4 +1,4 @@
-from pair import Client
+from pairit import Client
 
 
 client = Client(provider="chatgpt")
