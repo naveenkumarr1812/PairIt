@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/logo.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600"/>
+  <img src="https://raw.githubusercontent.com/naveenkumarr1812/pairit/main/assets/logo.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600"/>
 </p>
 
 <p align="center">

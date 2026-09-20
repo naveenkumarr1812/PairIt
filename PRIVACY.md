@@ -38,10 +38,10 @@ When using PairIt to interact with AI services (such as OpenAI's ChatGPT, Anthro
 
 ### 5. Open Source Transparency
 PairIt is open-source under the MIT License. You can review the complete source code at any time:  
-[https://github.com/naveenkumarr1812/PairIt](https://github.com/naveenkumarr1812/PairIt)
+[https://github.com/naveenkumarr1812/pairit](https://github.com/naveenkumarr1812/pairit)
 
 ---
 
 ### 6. Contact
 If you have any questions or feedback regarding this Privacy Policy, please open an issue on GitHub:  
-[https://github.com/naveenkumarr1812/PairIt/issues](https://github.com/naveenkumarr1812/PairIt/issues)
+[https://github.com/naveenkumarr1812/pairit/issues](https://github.com/naveenkumarr1812/pairit/issues)
