@@ -34,4 +34,4 @@ Repository = "https://github.com/naveenkumarr1812/PairIt"
 Issues = "https://github.com/naveenkumarr1812/PairIt/issues"
 
 [tool.setuptools.packages.find]
-include = ["pairit*", "pair*"]
+include = ["pairit*"]

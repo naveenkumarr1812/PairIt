@@ -47,7 +47,7 @@ class Client:
             self._bridge.set_provider(provider)
         except Exception as error:
             # Keep Client construction safe. A later chat() call returns a
-            # normal PAIR response instead of exposing the startup exception.
+            # normal PairIt response instead of exposing the startup exception.
             self._init_error = self._friendly_error(error)
 
     # ================================================================
@@ -98,7 +98,7 @@ class Client:
         timeout: float | None = 10.0,
     ) -> bool:
         """
-        Wait briefly for the PAIR extension.
+        Wait briefly for the PairIt extension.
 
         A default finite connection wait prevents an application from
         hanging forever when the extension has not been connected.
@@ -125,12 +125,12 @@ class Client:
         """
         Send a chat request.
 
-        Runtime PAIR errors are converted into normal responses/chunks so
-        application code does not need to catch PAIR exceptions.
+        Runtime PairIt errors are converted into normal responses/chunks so
+        application code does not need to catch PairIt exceptions.
         """
         if self._closed:
             return self._build_error_response(
-                "PAIR client is closed."
+                "pairit client is closed."
             )
 
         if not isinstance(prompt, str) or not prompt.strip():
@@ -188,7 +188,7 @@ class Client:
         """Send chat messages without exposing runtime exceptions."""
         if self._closed:
             return self._build_error_response(
-                "PAIR client is closed."
+                "pairit client is closed."
             )
 
         if not isinstance(messages, list) or not messages:

@@ -114,7 +114,7 @@ class BridgeServer:
 
         self._thread = threading.Thread(
             target=self._run_loop,
-            name="pair-bridge",
+            name="pairit-bridge",
             daemon=True,
         )
 
@@ -122,12 +122,12 @@ class BridgeServer:
 
         if not self._started.wait(timeout=5):
             raise RuntimeError(
-                "PAIR bridge did not start within 5 seconds."
+                "pairit bridge did not start within 5 seconds."
             )
 
         if self._start_error is not None:
             raise RuntimeError(
-                "Failed to start PAIR bridge."
+                "Failed to start pairit bridge."
             ) from self._start_error
 
     def stop(self) -> None:
@@ -149,7 +149,7 @@ class BridgeServer:
             future.result(timeout=5)
         except Exception:
             logger.exception(
-                "Error while stopping PAIR bridge."
+                "Error while stopping pairit bridge."
             )
 
     def _run_loop(self) -> None:
@@ -252,13 +252,13 @@ class BridgeServer:
         await self._site.start()
 
         logger.info(
-            "PAIR bridge listening on http://%s:%s",
+            "pairit bridge listening on http://%s:%s",
             self.host,
             self.port,
         )
 
         logger.info(
-            "PAIR WebSocket listening on ws://%s:%s/ws",
+            "pairit WebSocket listening on ws://%s:%s/ws",
             self.host,
             self.port,
         )
@@ -295,7 +295,7 @@ class BridgeServer:
             if not future.done():
                 future.set_exception(
                     RuntimeError(
-                        "PAIR bridge stopped."
+                        "pairit bridge stopped."
                     )
                 )
 
@@ -303,7 +303,7 @@ class BridgeServer:
             stream_queue.put(
                 {
                     "type": "chat_stream_error",
-                    "error": "PAIR bridge stopped.",
+                    "error": "pairit bridge stopped.",
                 }
             )
 
@@ -312,7 +312,7 @@ class BridgeServer:
                 await self._runner.cleanup()
             except Exception:
                 logger.exception(
-                    "Failed to clean up Pair HTTP server."
+                    "Failed to clean up pairit HTTP server."
                 )
 
         self._runner = None
@@ -396,7 +396,7 @@ class BridgeServer:
             )
 
         # --------------------------------------------------------------
-        # Wait briefly for the PAIR extension to connect.
+        # Wait briefly for the PairIt extension to connect.
         # The extension may reconnect during this period.
         # Generation itself still has no default timeout.
         # --------------------------------------------------------------
@@ -408,8 +408,8 @@ class BridgeServer:
 
             if not connected:
                 raise ExtensionNotConnectedError(
-                    "PAIR extension is not connected. "
-                    "First connect with the PAIR extension, "
+                    "PairIt extension is not connected. "
+                    "First connect with the PairIt extension, "
                     "then try again."
                 )
 
@@ -421,8 +421,8 @@ class BridgeServer:
 
             if not self.extension_connected:
                 raise ExtensionNotConnectedError(
-                    "PAIR extension is not connected. "
-                    "First connect with the PAIR extension, "
+                    "PairIt extension is not connected. "
+                    "First connect with the PairIt extension, "
                     "then try again."
                 )
 
@@ -459,7 +459,7 @@ class BridgeServer:
                 )
 
                 raise RuntimeError(
-                    "PAIR bridge is not running."
+                    "pairit bridge is not running."
                 )
 
             send_future = (
@@ -547,7 +547,7 @@ class BridgeServer:
         """
         Stream incremental browser response chunks.
 
-        PAIR waits briefly for the extension to connect. Once the request is
+        pairit waits briefly for the extension to connect. Once the request is
         sent, there is no default generation timeout. If timeout is supplied,
         it applies to waiting for each stream event.
         """
@@ -568,16 +568,16 @@ class BridgeServer:
 
             if not connected:
                 raise ExtensionNotConnectedError(
-                    "PAIR extension is not connected. "
-                    "First connect with the PAIR extension, "
+                    "PairIt extension is not connected. "
+                    "First connect with the PairIt extension, "
                     "then try again."
                 )
 
         with self._chat_lock:
             if not self.extension_connected:
                 raise ExtensionNotConnectedError(
-                    "PAIR extension is not connected. "
-                    "First connect with the PAIR extension, "
+                    "PairIt extension is not connected. "
+                    "First connect with the PairIt extension, "
                     "then try again."
                 )
 
@@ -606,7 +606,7 @@ class BridgeServer:
             if loop is None or not loop.is_running():
                 self._remove_pending_stream(request_id)
                 raise RuntimeError(
-                    "PAIR bridge is not running."
+                    "pairit bridge is not running."
                 )
 
             send_future = asyncio.run_coroutine_threadsafe(
@@ -1106,7 +1106,7 @@ class BridgeServer:
                 pass
 
         logger.info(
-            "PAIR extension connected."
+            "PairIt extension connected."
         )
 
         try:
@@ -1157,7 +1157,7 @@ class BridgeServer:
                     self._extension_connected.clear()
 
             logger.info(
-                "PAIR extension disconnected."
+                "PairIt extension disconnected."
             )
 
         return websocket
@@ -1203,7 +1203,7 @@ class BridgeServer:
             )
 
             logger.info(
-                "PAIR extension is ready."
+                "PairIt extension is ready."
             )
 
             return
@@ -1342,7 +1342,7 @@ class BridgeServer:
             or websocket.closed
         ):
             raise ExtensionNotConnectedError(
-                "PAIR is not connected."
+                "PairIt extension is not connected."
             )
 
         await websocket.send_str(
