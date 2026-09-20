@@ -40,7 +40,8 @@ Your Python Application
   PairIt Chrome Extension
     ┌────┴────┬───────┐
     ▼         ▼       ▼
- AI Tab 1  AI Tab 2  AI Tab 3
+ ChatGPT   Claude   Gemini
+  (tab)    (tab)    (tab)
 ```
 
 **Design highlights:**
