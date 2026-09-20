@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/PyPI-v0.4.1-7C3AED?style=flat-square" alt="PyPI version"/></a>
+  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/PyPI-v0.4.2-7C3AED?style=flat-square" alt="PyPI version"/></a>
   <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/python-≥%203.10-EA580C?style=flat-square" alt="Python versions"/></a>
   <img src="https://img.shields.io/badge/Chrome%20Extension-MV3-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome MV3"/>
   <img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="License MIT"/>
