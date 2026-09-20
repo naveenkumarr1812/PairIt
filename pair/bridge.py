@@ -691,8 +691,8 @@ class BridgeServer:
 
         return self._json_response(
             {
-                "name": "PAIR",
-                "version": "0.3.6",
+                "name": "PairIt",
+                "version": "0.4.1",
                 "status": "running",
                 "extensionConnected": (
                     self.extension_connected
