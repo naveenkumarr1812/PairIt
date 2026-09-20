@@ -30,12 +30,12 @@ const HTTP_URL =
   `http://${BRIDGE_HOST}:${BRIDGE_PORT}/`;
 
 const WATCHDOG_ALARM =
-  "pair_bridge_watchdog";
+  "pairit_bridge_watchdog";
 
 const RECONNECT_DELAY_MS = 2000;
 
 const ENABLED_KEY =
-  "pairEnabled";
+  "pairitEnabled";
 
 let socket = null;
 let reconnectTimer = null;
@@ -44,7 +44,7 @@ let bridgeCheckInProgress = false;
 let activeProvider =
   "chatgpt";
 
-let pairEnabled =
+let pairitEnabled =
   false;
 
 let lastConnectionError =
@@ -405,7 +405,7 @@ function clearReconnectTimer() {
 
 function scheduleReconnect() {
   if (
-    !pairEnabled ||
+    !pairitEnabled ||
     reconnectTimer
   ) {
     return;
@@ -556,7 +556,7 @@ function closeBridgeConnection() {
  * 3. The local bridge is actually reachable
  */
 async function connectToBridge() {
-  if (!pairEnabled) {
+  if (!pairitEnabled) {
     return;
   }
 
@@ -591,7 +591,7 @@ async function connectToBridge() {
     return;
   }
 
-  if (!pairEnabled) {
+  if (!pairitEnabled) {
     return;
   }
 
@@ -626,7 +626,7 @@ async function connectToBridge() {
       if (
         socket !==
           newSocket ||
-        !pairEnabled
+        !pairitEnabled
       ) {
         try {
           newSocket.close();
@@ -702,7 +702,7 @@ async function connectToBridge() {
           null;
 
         if (
-          pairEnabled
+          pairitEnabled
         ) {
           /*
            * Don't display connection errors for a normal
@@ -818,7 +818,7 @@ async function handleChatRequest(
   }
 
   if (
-    !pairEnabled ||
+    !pairitEnabled ||
     !socket ||
     socket.readyState !==
       WebSocket.OPEN
@@ -1054,7 +1054,7 @@ chrome.runtime.onMessage.addListener(
      * ------------------------------------------------------------ */
     if (
       message?.type ===
-      "pair_provider_stream_chunk"
+      "pairit_provider_stream_chunk"
     ) {
       if (
         message.requestId &&
@@ -1096,7 +1096,7 @@ chrome.runtime.onMessage.addListener(
      * ------------------------------------------------------------ */
     if (
       message?.type ===
-      "pair_provider_stream_error"
+      "pairit_provider_stream_error"
     ) {
       if (
         message.requestId &&
@@ -1134,7 +1134,7 @@ chrome.runtime.onMessage.addListener(
 
     if (
       message?.type ===
-      "pair_provider_result"
+      "pairit_provider_result"
     ) {
       if (
         sender?.tab?.id !=
@@ -1171,7 +1171,7 @@ chrome.runtime.onMessage.addListener(
 
     if (
       message?.type ===
-      "pair_provider_error"
+      "pairit_provider_error"
     ) {
       if (
         sender?.tab?.id !=
@@ -1234,7 +1234,7 @@ chrome.runtime.onMessage.addListener(
  * ENABLE / DISABLE
  * ================================================================ */
 
-async function getPairEnabled() {
+async function getPairitEnabled() {
   try {
     const result =
       await chrome.storage.session.get(
@@ -1252,19 +1252,19 @@ async function getPairEnabled() {
 }
 
 
-async function setPairEnabled(
+async function setPairitEnabled(
   enabled
 ) {
-  pairEnabled =
+  pairitEnabled =
     Boolean(enabled);
 
   await chrome.storage.session.set({
     [ENABLED_KEY]:
-      pairEnabled,
+      pairitEnabled,
   });
 
   if (
-    pairEnabled
+    pairitEnabled
   ) {
     lastConnectionError =
       null;
@@ -1296,7 +1296,7 @@ async function getStatus() {
 
   return {
     enabled:
-      pairEnabled,
+      pairitEnabled,
 
     connected,
 
@@ -1326,7 +1326,7 @@ async function handlePopupMessage(
     case "get_status":
 
       if (
-        pairEnabled &&
+        pairitEnabled &&
         (
           !socket ||
           socket.readyState ===
@@ -1341,21 +1341,21 @@ async function handlePopupMessage(
 
     case "set_enabled":
 
-      return setPairEnabled(
+      return setPairitEnabled(
         message.enabled === true
       );
 
 
     case "connect":
 
-      return setPairEnabled(
+      return setPairitEnabled(
         true
       );
 
 
     case "disconnect":
 
-      return setPairEnabled(
+      return setPairitEnabled(
         false
       );
 
@@ -1448,7 +1448,7 @@ chrome.runtime.onStartup.addListener(
      * pairit must be manually enabled for each
      * new Chrome session.
      */
-    pairEnabled =
+    pairitEnabled =
       false;
 
     clearReconnectTimer();
@@ -1466,7 +1466,7 @@ chrome.runtime.onStartup.addListener(
 chrome.runtime.onInstalled.addListener(
   async () => {
 
-    pairEnabled =
+    pairitEnabled =
       false;
 
     clearReconnectTimer();
@@ -1494,7 +1494,7 @@ chrome.alarms.onAlarm.addListener(
     if (
       alarm?.name !==
         WATCHDOG_ALARM ||
-      !pairEnabled
+      !pairitEnabled
     ) {
       return;
     }
@@ -1517,14 +1517,14 @@ chrome.alarms.create(
  * ================================================================ */
 
 (async () => {
-  pairEnabled =
-    await getPairEnabled();
+  pairitEnabled =
+    await getPairitEnabled();
 
   lastConnectionError =
     null;
 
   if (
-    pairEnabled
+    pairitEnabled
   ) {
     connectToBridge();
   }

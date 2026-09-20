@@ -1048,7 +1048,7 @@ async function streamGeminiPage(incomingMessages, requestId) {
     resolved = true;
     cleanup();
     send({
-      type: "pair_provider_stream_error",
+      type: "pairit_provider_stream_error",
       provider: "gemini",
       requestId,
       error: error?.message || String(error)
@@ -1059,7 +1059,7 @@ async function streamGeminiPage(incomingMessages, requestId) {
     const delta = text.startsWith(lastText) ? text.slice(lastText.length) : text;
     lastText = text;
     if (delta) send({
-      type: "pair_provider_stream_chunk",
+      type: "pairit_provider_stream_chunk",
       provider: "gemini",
       requestId,
       content: delta,
@@ -1072,7 +1072,7 @@ async function streamGeminiPage(incomingMessages, requestId) {
     resolved = true;
     cleanup();
     send({
-      type: "pair_provider_stream_chunk",
+      type: "pairit_provider_stream_chunk",
       provider: "gemini",
       requestId,
       content: "",

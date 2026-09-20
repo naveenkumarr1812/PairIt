@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from .bridge import BridgeServer
-from .exceptions import PairError, PairitError
+from .exceptions import PairitError
 from .types import ChatChunk, ChatResponse
 
 
@@ -355,7 +355,7 @@ class Client:
 
     @staticmethod
     def _friendly_error(error: BaseException) -> str:
-        if isinstance(error, PairError):
+        if isinstance(error, PairitError):
             message = str(error).strip()
             return message or DEFAULT_ERROR_MESSAGE
 

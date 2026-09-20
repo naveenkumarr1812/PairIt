@@ -2,10 +2,6 @@ class PairitError(Exception):
     """Base exception for pairit."""
 
 
-# Backward compatibility alias
-PairError = PairitError
-
-
 class BridgeNotRunningError(PairitError):
     """Raised when the local pairit bridge cannot be started or reached."""
 

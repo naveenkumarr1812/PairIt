@@ -39,7 +39,7 @@ var ChatGPTProvider = globalThis.ChatGPTProvider || {
       const response = await chrome.tabs.sendMessage(
         tabId,
         {
-          type: "pair_chatgpt_start",
+          type: "pairit_chatgpt_start",
           requestId,
           messages,
           stream,
@@ -80,7 +80,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
       return;
     }
 
-    if (message.type === "pair_provider_result") {
+    if (message.type === "pairit_provider_result") {
       const pending =
         chatGPTPendingRequests.get(message.requestId);
 
@@ -92,7 +92,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
       return;
     }
 
-    if (message.type === "pair_provider_error") {
+    if (message.type === "pairit_provider_error") {
       const pending =
         chatGPTPendingRequests.get(message.requestId);
 
@@ -123,7 +123,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
       return;
     }
 
-    if (message.type === "pair_provider_result") {
+    if (message.type === "pairit_provider_result") {
       sendSocketMessage({
         type: "chat_response",
         requestId: message.requestId,
@@ -132,7 +132,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
       });
     }
 
-    if (message.type === "pair_provider_error") {
+    if (message.type === "pairit_provider_error") {
       sendSocketMessage({
         type: "chat_response",
         requestId: message.requestId,
@@ -163,11 +163,11 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
    * Prevent duplicate initialization when the same file
    * is injected more than once.
    */
-  if (globalThis.__PAIR_CHATGPT_CONTENT_INITIALIZED__) {
+  if (globalThis.__PAIRIT_CHATGPT_CONTENT_INITIALIZED__) {
     return;
   }
 
-  globalThis.__PAIR_CHATGPT_CONTENT_INITIALIZED__ = true;
+  globalThis.__PAIRIT_CHATGPT_CONTENT_INITIALIZED__ = true;
 
 
   const activeRequests = new Map();
@@ -179,7 +179,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
 
   chrome.runtime.onMessage.addListener(
     (message, sender, sendResponse) => {
-      if (message?.type !== "pair_chatgpt_start") {
+      if (message?.type !== "pairit_chatgpt_start") {
         return false;
       }
 
@@ -515,7 +515,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
 
     chrome.runtime
       .sendMessage({
-        type: "pair_provider_stream_chunk",
+        type: "pairit_provider_stream_chunk",
         provider: "chatgpt",
         requestId: request.requestId,
         content: delta,
@@ -963,7 +963,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
 
       chrome.runtime
         .sendMessage({
-          type: "pair_provider_stream_chunk",
+          type: "pairit_provider_stream_chunk",
           provider: "chatgpt",
           requestId: request.requestId,
           content: "",
@@ -976,7 +976,7 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
 
     chrome.runtime
       .sendMessage({
-        type: "pair_provider_result",
+        type: "pairit_provider_result",
         provider: "chatgpt",
         requestId: request.requestId,
         content,
@@ -1025,8 +1025,8 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
       .sendMessage({
         type:
           request.stream
-            ? "pair_provider_stream_error"
-            : "pair_provider_error",
+            ? "pairit_provider_stream_error"
+            : "pairit_provider_error",
 
         provider:
           "chatgpt",

@@ -427,7 +427,7 @@ class BridgeServer:
                 )
 
             request_id = (
-                f"pair_"
+                f"pairit_"
                 f"{int(time.time() * 1000)}_"
                 f"{uuid.uuid4().hex[:8]}"
             )
@@ -582,7 +582,7 @@ class BridgeServer:
                 )
 
             request_id = (
-                f"pair_"
+                f"pairit_"
                 f"{int(time.time() * 1000)}_"
                 f"{uuid.uuid4().hex[:8]}"
             )
