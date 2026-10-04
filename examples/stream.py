@@ -1,7 +1,7 @@
 from pairit import Client
 
 
-client = Client()
+client = Client("chatgpt")
 
 try:
     for chunk in client.chat(
