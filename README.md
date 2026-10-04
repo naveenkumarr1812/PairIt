@@ -1,6 +1,7 @@
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/dark-mode.png">
+        <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/light-mode.png">
         <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/light-mode.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600">
     </picture>
 </p>
