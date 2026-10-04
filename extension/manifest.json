@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PairIt",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "PairIt – Your Code. Your Browser. Your AI.",
   "icons": {
     "16": "icons/icon16.png",
@@ -14,15 +14,26 @@
     "scripting",
     "debugger",
     "alarms",
-    "storage"
+    "storage",
+    "offscreen",
+    "sidePanel"
   ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
   "host_permissions": [
     "http://127.0.0.1:8765/*",
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
     "https://claude.ai/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "https://huggingface.co/*",
+    "https://*.hf.co/*",
+    "https://*.huggingface.co/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -34,5 +45,15 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "stateless/*",
+        "stateless/wasm/*",
+        "stateless/dist/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

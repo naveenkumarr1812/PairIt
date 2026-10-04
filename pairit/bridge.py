@@ -15,8 +15,18 @@ from aiohttp import web
 from .exceptions import (
     ChatTimeoutError,
     ExtensionNotConnectedError,
+    InvalidImageError,
+    ModelBusyError,
+    ModelDownloadError,
+    ModelError,
+    ModelLoadError,
+    ModelNotDownloadedError,
+    ModelOutOfMemoryError,
+    ModelRuntimeError,
     ProviderError,
     ProviderNotOpenError,
+    UnknownModelError,
+    UnsupportedOperationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -681,6 +691,98 @@ class BridgeServer:
                 self._remove_pending_stream(request_id)
 
     # ------------------------------------------------------------------
+    # Stateless Model Requests
+    # ------------------------------------------------------------------
+
+    def execute_model_request(
+        self,
+        *,
+        model: str,
+        operation: str,
+        payload: dict[str, Any],
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """
+        Send a stateless model request (chat, vision, embed) through the bridge.
+        """
+        if not self.extension_connected:
+            connected = self.wait_for_extension(
+                timeout=EXTENSION_CONNECT_WAIT_SECONDS
+            )
+            if not connected:
+                raise ExtensionNotConnectedError(
+                    "PairIt extension is not connected. "
+                    "First connect with the PairIt extension, "
+                    "then try again."
+                )
+
+        request_id = (
+            f"pairit_model_"
+            f"{int(time.time() * 1000)}_"
+            f"{uuid.uuid4().hex[:8]}"
+        )
+
+        future: Future[dict[str, Any]] = Future()
+
+        with self._pending_lock:
+            self._pending[request_id] = future
+
+        msg = {
+            "type": "model_request",
+            "requestId": request_id,
+            "model": model,
+            "operation": operation,
+            "payload": payload,
+        }
+
+        loop = self._loop
+        if loop is None or not loop.is_running():
+            self._remove_pending(request_id)
+            raise RuntimeError("pairit bridge is not running.")
+
+        send_future = asyncio.run_coroutine_threadsafe(
+            self._send_to_extension(msg),
+            loop,
+        )
+
+        try:
+            send_future.result(timeout=5)
+            result = future.result(timeout=timeout)
+        except TimeoutError as exc:
+            if timeout is None:
+                raise
+            raise ChatTimeoutError(
+                f"Timed out waiting for model '{model}' response after {timeout:.0f} seconds."
+            ) from exc
+        finally:
+            self._remove_pending(request_id)
+
+        if result.get("type") == "model_error":
+            code = result.get("code")
+            msg_text = result.get("message") or f"Model request failed ({code})"
+            if code == "unknown_model":
+                raise UnknownModelError(msg_text)
+            if code == "model_not_downloaded":
+                raise ModelNotDownloadedError(msg_text)
+            if code == "unsupported_operation":
+                raise UnsupportedOperationError(msg_text)
+            if code == "model_out_of_memory":
+                raise ModelOutOfMemoryError(msg_text)
+            if code == "model_busy":
+                raise ModelBusyError(msg_text)
+            if code == "invalid_image":
+                raise InvalidImageError(msg_text)
+            if code in ("model_runtime_error", "model_runtime_crash"):
+                raise ModelRuntimeError(msg_text)
+            if code == "model_load_error":
+                raise ModelLoadError(msg_text)
+            if code == "model_download_error":
+                raise ModelDownloadError(msg_text)
+            raise ModelError(msg_text)
+
+        return result.get("data", {})
+
+    # ------------------------------------------------------------------
     # HTTP handlers
     # ------------------------------------------------------------------
 
@@ -1315,6 +1417,23 @@ class BridgeServer:
                 future.set_result(
                     message
                 )
+
+            return
+
+        # --------------------------------------------------------------
+        # Stateless model response & error
+        # --------------------------------------------------------------
+
+        if message_type in ("model_response", "model_error"):
+            request_id = message.get("requestId")
+            if not request_id:
+                return
+
+            with self._pending_lock:
+                future = self._pending.get(request_id)
+
+            if future is not None and not future.done():
+                future.set_result(message)
 
             return
 

@@ -1,0 +1,991 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "models": [
+    {
+      "id": "qwen3-0.6b",
+      "displayName": "Qwen3 0.6B",
+      "category": "llm",
+      "capabilities": [
+        "chat"
+      ],
+      "description": "Compact and capable instruction-tuned causal language model running locally via WebGPU/WASM.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "onnx-community/Qwen2.5-0.5B-Instruct",
+        "revision": "cc5cc01a65cc3ff17bdb73a7de33d879f62599b0",
+        "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "text-generation",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q4",
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_q4.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 900000000,
+        "estimatedRuntimeMemoryBytes": 850000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/config.json",
+          "sizeBytes": 678,
+          "sha256": "777e01f0fbb3346eb229cb6fb278ed6533c1e4dcb9ebf4bed0f6e94ef17fa1b5"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/generation_config.json",
+          "sizeBytes": 242,
+          "sha256": "f7e7ce458658b2d40d9eb213b91b77a8bf698845ab89360976722d7ac46928a3"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/tokenizer.json",
+          "sizeBytes": 7031673,
+          "sha256": "a8506e7111b80c6d8635951a02eab0f4e1a8e4e5772da83846579e97b16f61bf"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/tokenizer_config.json",
+          "sizeBytes": 7306,
+          "sha256": "7e88129d9769a0b14b1587a7d5e829fe93ac0e1511636471fdfc0811951418e6"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/vocab.json",
+          "sizeBytes": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/merges.txt",
+          "sizeBytes": 1671853,
+          "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+        },
+        {
+          "path": "onnx/model_q4.onnx",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct/resolve/cc5cc01a65cc3ff17bdb73a7de33d879f62599b0/onnx/model_q4.onnx",
+          "sizeBytes": 786156820,
+          "sha256": "09235a3b1c135cd04ef570e5053b5c079e028078a2cc5f76ba6a251e91bf3296"
+        }
+      ]
+    },
+    {
+      "id": "all-minilm-l6-v2",
+      "displayName": "all-MiniLM-L6-v2",
+      "category": "embedding",
+      "capabilities": [
+        "embed"
+      ],
+      "description": "Fast and lightweight sentence embedding model mapping texts to a 384-dimensional dense vector space.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/all-MiniLM-L6-v2",
+        "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+        "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "feature-extraction",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q8",
+        "dimensions": 384,
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_quantized.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 50000000,
+        "estimatedRuntimeMemoryBytes": 80000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/751bff37182d3f1213fa05d7196b954e230abad9/config.json",
+          "sizeBytes": 650,
+          "sha256": "7135149f7cffa1a573466c6e4d8423ed73b62fd2332c575bf738a0d033f70df7"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/751bff37182d3f1213fa05d7196b954e230abad9/tokenizer.json",
+          "sizeBytes": 711661,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/751bff37182d3f1213fa05d7196b954e230abad9/tokenizer_config.json",
+          "sizeBytes": 366,
+          "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/751bff37182d3f1213fa05d7196b954e230abad9/special_tokens_map.json",
+          "sizeBytes": 125,
+          "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+        },
+        {
+          "path": "vocab.txt",
+          "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/751bff37182d3f1213fa05d7196b954e230abad9/vocab.txt",
+          "sizeBytes": 231508,
+          "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+        },
+        {
+          "path": "onnx/model_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/751bff37182d3f1213fa05d7196b954e230abad9/onnx/model_quantized.onnx",
+          "sizeBytes": 22972370,
+          "sha256": "afdb6f1a0e45b715d0bb9b11772f032c399babd23bfc31fed1c170afc848bdb1"
+        }
+      ]
+    },
+    {
+      "id": "smollm2-360m",
+      "displayName": "SmolLM2 360M",
+      "category": "llm",
+      "capabilities": [
+        "chat"
+      ],
+      "description": "High-performance compact language model trained by Hugging Face on 4 trillion tokens, specialized for fast, fluent on-device chat.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "revision": "a10cc1512eabd3dde888204e902eca88bddb4951",
+        "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "text-generation",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q4",
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_q4.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 500000000,
+        "estimatedRuntimeMemoryBytes": 480000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/config.json",
+          "sizeBytes": 846,
+          "sha256": "224f72354f10d617a359cc82ad15a3c96e866b9b2ffadb81997eeea9e88e22ee"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/generation_config.json",
+          "sizeBytes": 132,
+          "sha256": "87b916edaaab66b3899b9d0dd0752727dff6666686da0504d89ae0a6e055a013"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/tokenizer.json",
+          "sizeBytes": 2104556,
+          "sha256": "9ca9acddb6525a194ec8ac7a87f24fbba7232a9a15ffa1af0c1224fcd888e47c"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/tokenizer_config.json",
+          "sizeBytes": 3764,
+          "sha256": "4ec77d44f62efeb38d7e044a1db318f6a939438425312dfa333b8382dbad98df"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/special_tokens_map.json",
+          "sizeBytes": 655,
+          "sha256": "2b7379f3ae813529281a5c602bc5a11c1d4e0a99107aaa597fe936c1e813ca52"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/vocab.json",
+          "sizeBytes": 800662,
+          "sha256": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/merges.txt",
+          "sizeBytes": 466391,
+          "sha256": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510"
+        },
+        {
+          "path": "onnx/model_q4.onnx",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct/resolve/a10cc1512eabd3dde888204e902eca88bddb4951/onnx/model_q4.onnx",
+          "sizeBytes": 387943246,
+          "sha256": "a4ffda96e65beafc6f6cef0cbcf9fdc1cbdd79c230906bf3897d190547c7a596"
+        }
+      ]
+    },
+    {
+      "id": "smolvlm-500m",
+      "displayName": "SmolVLM 500M",
+      "category": "vlm",
+      "capabilities": [
+        "vision"
+      ],
+      "description": "High-quality, compact vision-language model for accurate OCR, multimodal reasoning, and detailed image understanding locally.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "HuggingFaceTB/SmolVLM-500M-Instruct",
+        "revision": "a7da5b986cb59b408707209984f360a5f4ad7e47",
+        "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "image-to-text",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q4",
+        "modelSubdirectory": "onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 520000000,
+        "estimatedRuntimeMemoryBytes": 600000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/config.json",
+          "sizeBytes": 7339,
+          "sha256": "daacbbca6af3c34e50466c72aed2df4553a08084f6a0551d4ae420a241cb66c6"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/generation_config.json",
+          "sizeBytes": 136,
+          "sha256": "067a2a54e5f87162ecac6e0e911cc4665fc8f7f3324794ecbac0f76badb56636"
+        },
+        {
+          "path": "chat_template.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/chat_template.json",
+          "sizeBytes": 429,
+          "sha256": "a68ad1a42681ae44eacd109ff8dd56a840f761c03d72f4ff4c515d092f882168"
+        },
+        {
+          "path": "processor_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/processor_config.json",
+          "sizeBytes": 68,
+          "sha256": "e7bff42da73ae9eec9042ef20e066e11f1ee20f025358ff79131e3c0fb549b46"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/preprocessor_config.json",
+          "sizeBytes": 486,
+          "sha256": "6cb6e36d6fcb88ca1502c4a26750715dc3e7dedddc9a8f17b27d8d167d1457e7"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/tokenizer_config.json",
+          "sizeBytes": 28249,
+          "sha256": "36c6fd44d07d10fd8180ee6b46dcccf69fb7c06753968ff0d7e17b8bfe17b777"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/tokenizer.json",
+          "sizeBytes": 3548256,
+          "sha256": "5ece781dc8d2b2f3e2f289ca0ae50b17cfc27dd27bfe7971bb8241e0b964331a"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/special_tokens_map.json",
+          "sizeBytes": 1069,
+          "sha256": "aa0ff906077086dfa9734a7f97f68c825877a48f9468807be65504495cdeef09"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/vocab.json",
+          "sizeBytes": 800662,
+          "sha256": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/merges.txt",
+          "sizeBytes": 466391,
+          "sha256": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510"
+        },
+        {
+          "path": "onnx/vision_encoder_q4.onnx",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/onnx/vision_encoder_q4.onnx",
+          "sizeBytes": 66734107,
+          "sha256": "179812d5b1315edbe3e7164ea3d847c52723692e83ac9c770a5234962663fcad"
+        },
+        {
+          "path": "onnx/decoder_model_merged_q4.onnx",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/onnx/decoder_model_merged_q4.onnx",
+          "sizeBytes": 229119140,
+          "sha256": "6d64c0fdce1c3515c40a08ff8e398bfbc0b2e961ae46d1b84b91e6a7b269b9d1"
+        },
+        {
+          "path": "onnx/embed_tokens_q4.onnx",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct/resolve/a7da5b986cb59b408707209984f360a5f4ad7e47/onnx/embed_tokens_q4.onnx",
+          "sizeBytes": 189235518,
+          "sha256": "19f4fad7cb17c6dad11b4520d2abcba173fc91f755d71907d31d11a9e5761606"
+        }
+      ]
+    },
+    {
+      "id": "qwen2.5-coder-0.5b",
+      "displayName": "Qwen2.5-Coder 0.5B",
+      "category": "llm",
+      "capabilities": [
+        "chat"
+      ],
+      "description": "Alibaba Qwen2.5-Coder model specialized for code generation, code reasoning, and technical chat locally.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "onnx-community/Qwen2.5-Coder-0.5B-Instruct",
+        "revision": "f0292f665fd307846ff3c318a91a1bc29d091492",
+        "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "text-generation",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q4",
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_q4.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 950000000,
+        "estimatedRuntimeMemoryBytes": 850000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/config.json",
+          "sizeBytes": 916,
+          "sha256": "0cc602159ab086bffa8500296b95f067dfc6b690863f7393b3ac5c82137c059b"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/generation_config.json",
+          "sizeBytes": 243,
+          "sha256": "519a8db66fcfd0d18731eb75169ff8393a6f9c479fd50142fb5ee2580bb9ae64"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/tokenizer.json",
+          "sizeBytes": 11421896,
+          "sha256": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/tokenizer_config.json",
+          "sizeBytes": 7306,
+          "sha256": "7e88129d9769a0b14b1587a7d5e829fe93ac0e1511636471fdfc0811951418e6"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/vocab.json",
+          "sizeBytes": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/merges.txt",
+          "sizeBytes": 1671853,
+          "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+        },
+        {
+          "path": "onnx/model_q4.onnx",
+          "url": "https://huggingface.co/onnx-community/Qwen2.5-Coder-0.5B-Instruct/resolve/f0292f665fd307846ff3c318a91a1bc29d091492/onnx/model_q4.onnx",
+          "sizeBytes": 862087110,
+          "sha256": "2df7ea9739c3c26bd9d2cad0815768a5a0a985d4b5548b7de80c5e85e9a97b47"
+        }
+      ]
+    },
+    {
+      "id": "bge-small-en-v1.5",
+      "displayName": "BGE Small EN v1.5",
+      "category": "embedding",
+      "capabilities": [
+        "embed"
+      ],
+      "description": "State-of-the-art compact sentence embedding model from BAAI mapping English text to 384 dimensions.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/bge-small-en-v1.5",
+        "revision": "ea104dacec62c0de699686887e3f920caeb4f3e3",
+        "url": "https://huggingface.co/Xenova/bge-small-en-v1.5"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "feature-extraction",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q8",
+        "dimensions": 384,
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_quantized.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 70000000,
+        "estimatedRuntimeMemoryBytes": 85000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/ea104dacec62c0de699686887e3f920caeb4f3e3/config.json",
+          "sizeBytes": 683,
+          "sha256": "fa73f90bf92c8cace1fbcb709626306f2bdbc9ea3e5b5f94b440df9b6aa56350"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/ea104dacec62c0de699686887e3f920caeb4f3e3/tokenizer.json",
+          "sizeBytes": 711396,
+          "sha256": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/ea104dacec62c0de699686887e3f920caeb4f3e3/tokenizer_config.json",
+          "sizeBytes": 366,
+          "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/ea104dacec62c0de699686887e3f920caeb4f3e3/special_tokens_map.json",
+          "sizeBytes": 125,
+          "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+        },
+        {
+          "path": "vocab.txt",
+          "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/ea104dacec62c0de699686887e3f920caeb4f3e3/vocab.txt",
+          "sizeBytes": 231508,
+          "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+        },
+        {
+          "path": "onnx/model_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/ea104dacec62c0de699686887e3f920caeb4f3e3/onnx/model_quantized.onnx",
+          "sizeBytes": 34014426,
+          "sha256": "6c9c6101a956d62dfb5e7190c538226c0c5bb9cb27b651234b6df063ee7dbfe4"
+        }
+      ]
+    },
+    {
+      "id": "moondream2",
+      "displayName": "Moondream2",
+      "category": "vlm",
+      "capabilities": [
+        "vision"
+      ],
+      "description": "Fast and lightweight 0.5B parameter vision-language model for visual question answering and image understanding.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/moondream2",
+        "revision": "2d577a7ec3b54cce81456f5358d7aa815d587079",
+        "url": "https://huggingface.co/Xenova/moondream2"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "image-to-text",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q4",
+        "modelSubdirectory": "onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 1600000000,
+        "estimatedRuntimeMemoryBytes": 1200000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/config.json",
+          "sizeBytes": 1067,
+          "sha256": "ba91b8ed059c232f46e748fc16ff3f07ff4602ebefcfe60b81a8838446c5579f"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/generation_config.json",
+          "sizeBytes": 119,
+          "sha256": "7f8277ea44de0fc62232d0044853095b3628666a10ade209d591a1717ae51844"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/preprocessor_config.json",
+          "sizeBytes": 367,
+          "sha256": "60b82dd0a1fd3bd60ec7f2e9bbc6c99940d6bf0ac3196ce6b9d0852d27cb5405"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/tokenizer.json",
+          "sizeBytes": 2115868,
+          "sha256": "2cf2dc66fc194a622fe603f9f8571ae390b3170b4086f7ae207db8df6241c151"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/tokenizer_config.json",
+          "sizeBytes": 7511,
+          "sha256": "067ff06777f2d512e2ae8679130452dbcfb6e4caeab3bd1a14727d4c1aa9ae53"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/special_tokens_map.json",
+          "sizeBytes": 441,
+          "sha256": "10b8c8852c1e1f70b54d9aff61728408c28971c0e97a6c5a7b2debbd1d3e9c0c"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/vocab.json",
+          "sizeBytes": 798156,
+          "sha256": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/merges.txt",
+          "sizeBytes": 456318,
+          "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+        },
+        {
+          "path": "onnx/vision_encoder_q4.onnx",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/onnx/vision_encoder_q4.onnx",
+          "sizeBytes": 279536385,
+          "sha256": "e2458ab4ab41f43bb24c2b3aa2d68c34318612a6a628237e6c738ddbf5dc2843"
+        },
+        {
+          "path": "onnx/decoder_model_merged_q4.onnx",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/onnx/decoder_model_merged_q4.onnx",
+          "sizeBytes": 824343527,
+          "sha256": "6c6c986cb277a8dbafb4d437b6e56717fbe3dab7c0d9efceb77cfde48d081273"
+        },
+        {
+          "path": "onnx/embed_tokens_q4.onnx",
+          "url": "https://huggingface.co/Xenova/moondream2/resolve/2d577a7ec3b54cce81456f5358d7aa815d587079/onnx/embed_tokens_q4.onnx",
+          "sizeBytes": 419430658,
+          "sha256": "e83c0024e7785c5946ecda27729cdb4d32d5e6b72d75bc58a155f3d7247967ef"
+        }
+      ]
+    },
+    {
+      "id": "vit-gpt2-image-captioning",
+      "displayName": "ViT-GPT2 Captioner",
+      "category": "vlm",
+      "capabilities": [
+        "vision"
+      ],
+      "description": "Lightweight Vision Transformer and GPT-2 image captioning model for generating fast visual descriptions.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/vit-gpt2-image-captioning",
+        "revision": "215b4edcb7ec1fad5905a18a03f7b2007f6fabd0",
+        "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "image-to-text",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q8",
+        "modelSubdirectory": "onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 300000000,
+        "estimatedRuntimeMemoryBytes": 280000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/config.json",
+          "sizeBytes": 4888,
+          "sha256": "f65c81039a672962d686f71ee0242f0c89dc020a0e3f193a989a696bf3f9515e"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/generation_config.json",
+          "sizeBytes": 184,
+          "sha256": "997e1f943576edcc46e1b93078ec0e72054a62b4c7f521da42a1eab43c4c1d0c"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/preprocessor_config.json",
+          "sizeBytes": 378,
+          "sha256": "76304e9a1deb0d5f78349a57ad9d8057f36476c29bd292e907e2e8c451c93e9d"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/tokenizer.json",
+          "sizeBytes": 2107928,
+          "sha256": "6e785cd4f004c9291dadeba7d8d1c2871318d368a1cfcd416c0571dcd8f11413"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/tokenizer_config.json",
+          "sizeBytes": 456,
+          "sha256": "5b477c376e81670409e943fc7c8233a0356c8488e05a8aa246082a1d29e8d609"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/special_tokens_map.json",
+          "sizeBytes": 131,
+          "sha256": "8bcf4e58d0970bbcb3b111a4c1e297c082fbf61253b14b3c0c8f2972ccb61ba4"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/vocab.json",
+          "sizeBytes": 798156,
+          "sha256": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/merges.txt",
+          "sizeBytes": 456318,
+          "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+        },
+        {
+          "path": "onnx/encoder_model_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/onnx/encoder_model_quantized.onnx",
+          "sizeBytes": 87453213,
+          "sha256": "6f6e2e27c11303cf533682184543333e7ecb930a734197a0272a1e408aba2766"
+        },
+        {
+          "path": "onnx/decoder_model_merged_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/vit-gpt2-image-captioning/resolve/215b4edcb7ec1fad5905a18a03f7b2007f6fabd0/onnx/decoder_model_merged_quantized.onnx",
+          "sizeBytes": 158599996,
+          "sha256": "1f3ec53b5fc3614c0b54ee786755a7ec3007841f57543f8e241499edfadfa98f"
+        }
+      ]
+    },
+    {
+      "id": "smollm2-135m",
+      "displayName": "SmolLM2 135M",
+      "category": "llm",
+      "capabilities": [
+        "chat"
+      ],
+      "description": "Ultra-lightweight 135M parameter instruction-tuned model. Blazing-fast inference with virtually zero latency.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+        "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct"
+      },
+      "license": {
+        "name": "Apache-2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "text-generation",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q4",
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_q4.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 250000000,
+        "estimatedRuntimeMemoryBytes": 250000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/config.json",
+          "sizeBytes": 861,
+          "sha256": "8eb740e8bbe4cff95ea7b4588d17a2432deb16e8075bc5828ff7ba9be94d982a"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/generation_config.json",
+          "sizeBytes": 132,
+          "sha256": "87b916edaaab66b3899b9d0dd0752727dff6666686da0504d89ae0a6e055a013"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/tokenizer.json",
+          "sizeBytes": 2104556,
+          "sha256": "9ca9acddb6525a194ec8ac7a87f24fbba7232a9a15ffa1af0c1224fcd888e47c"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/tokenizer_config.json",
+          "sizeBytes": 3764,
+          "sha256": "4ec77d44f62efeb38d7e044a1db318f6a939438425312dfa333b8382dbad98df"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/special_tokens_map.json",
+          "sizeBytes": 655,
+          "sha256": "2b7379f3ae813529281a5c602bc5a11c1d4e0a99107aaa597fe936c1e813ca52"
+        },
+        {
+          "path": "vocab.json",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/vocab.json",
+          "sizeBytes": 800662,
+          "sha256": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"
+        },
+        {
+          "path": "merges.txt",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/merges.txt",
+          "sizeBytes": 466391,
+          "sha256": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510"
+        },
+        {
+          "path": "onnx/model_q4.onnx",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/12fd25f77366fa6b3b4b768ec3050bf629380bac/onnx/model_q4.onnx",
+          "sizeBytes": 182068553,
+          "sha256": "933577110303a2964096d19b6f15d3b4639bef7f99481ac0b61d9f3ad72f392a"
+        }
+      ]
+    },
+    {
+      "id": "gte-small",
+      "displayName": "GTE Small",
+      "category": "embedding",
+      "capabilities": [
+        "embed"
+      ],
+      "description": "General Text Embeddings Small from Alibaba DAMO Academy. Top-ranked compact embedding model with 384-dimensional vectors.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/gte-small",
+        "revision": "5927d1727bb12db490052a1b33265ad78058de08",
+        "url": "https://huggingface.co/Xenova/gte-small"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "feature-extraction",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q8",
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_quantized.onnx",
+        "dimensions": 384
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 84958878,
+        "estimatedRuntimeMemoryBytes": 120000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/gte-small/resolve/5927d1727bb12db490052a1b33265ad78058de08/config.json",
+          "sizeBytes": 601,
+          "sha256": "73f82cfb2bab7b9b7da090b2a71dac32f7ca79b12b2824d4caf9ecf0769b44ae"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/gte-small/resolve/5927d1727bb12db490052a1b33265ad78058de08/tokenizer.json",
+          "sizeBytes": 711661,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/gte-small/resolve/5927d1727bb12db490052a1b33265ad78058de08/tokenizer_config.json",
+          "sizeBytes": 557,
+          "sha256": "73687f47b47aedc8bfa8712f7e6616450058f1f1bb3d5e5861f8a92964d6467a"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/gte-small/resolve/5927d1727bb12db490052a1b33265ad78058de08/special_tokens_map.json",
+          "sizeBytes": 125,
+          "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+        },
+        {
+          "path": "vocab.txt",
+          "url": "https://huggingface.co/Xenova/gte-small/resolve/5927d1727bb12db490052a1b33265ad78058de08/vocab.txt",
+          "sizeBytes": 231508,
+          "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+        },
+        {
+          "path": "onnx/model_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/gte-small/resolve/5927d1727bb12db490052a1b33265ad78058de08/onnx/model_quantized.onnx",
+          "sizeBytes": 34014426,
+          "sha256": "18dec105109b6004369799ca4761fb8fb413c64172c02147bcfac186b5c5f6cb"
+        }
+      ]
+    },
+    {
+      "id": "multilingual-e5-small",
+      "displayName": "Multilingual E5 Small",
+      "category": "embedding",
+      "capabilities": [
+        "embed"
+      ],
+      "description": "Microsoft's state-of-the-art multilingual text embedding model supporting 100+ languages with 384-dimensional representations.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78",
+        "url": "https://huggingface.co/Xenova/multilingual-e5-small"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "feature-extraction",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q8",
+        "modelSubdirectory": "onnx",
+        "modelFile": "model_quantized.onnx",
+        "dimensions": 384
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 190461234,
+        "estimatedRuntimeMemoryBytes": 200000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/multilingual-e5-small/resolve/761b726dd34fb83930e26aab4e9ac3899aa1fa78/config.json",
+          "sizeBytes": 658,
+          "sha256": "cb99455288675345e1a4f411438d5d0adbba5fbd3a67ea4fb03c015433b996c1"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/multilingual-e5-small/resolve/761b726dd34fb83930e26aab4e9ac3899aa1fa78/tokenizer.json",
+          "sizeBytes": 17082730,
+          "sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/multilingual-e5-small/resolve/761b726dd34fb83930e26aab4e9ac3899aa1fa78/tokenizer_config.json",
+          "sizeBytes": 443,
+          "sha256": "a1d6bc8734a6f635dc158508bef000f8e2e5a759c7d92f984b2c86e5ff53425b"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/multilingual-e5-small/resolve/761b726dd34fb83930e26aab4e9ac3899aa1fa78/special_tokens_map.json",
+          "sizeBytes": 167,
+          "sha256": "d05497f1da52c5e09554c0cd874037a083e1dc1b9cfd48034d1c717f1afc07a7"
+        },
+        {
+          "path": "sentencepiece.bpe.model",
+          "url": "https://huggingface.co/Xenova/multilingual-e5-small/resolve/761b726dd34fb83930e26aab4e9ac3899aa1fa78/sentencepiece.bpe.model",
+          "sizeBytes": 5069051,
+          "sha256": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865"
+        },
+        {
+          "path": "onnx/model_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/multilingual-e5-small/resolve/761b726dd34fb83930e26aab4e9ac3899aa1fa78/onnx/model_quantized.onnx",
+          "sizeBytes": 118308185,
+          "sha256": "f80102d3f2a1229f387d3c81909990d8945513e347b0eab049f7de3c6f98c193"
+        }
+      ]
+    },
+    {
+      "id": "trocr-small-printed",
+      "displayName": "TrOCR Small Printed",
+      "category": "vlm",
+      "capabilities": [
+        "vision"
+      ],
+      "description": "Microsoft's lightweight Transformer OCR model for reading and extracting printed text and document content from images.",
+      "source": {
+        "provider": "huggingface",
+        "repository": "Xenova/trocr-small-printed",
+        "revision": "56c1626ea0b4aab378f3228235be2e824d4256bd",
+        "url": "https://huggingface.co/Xenova/trocr-small-printed"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      },
+      "runtime": {
+        "transformersJs": true,
+        "pipeline": "image-to-text",
+        "webgpu": true,
+        "wasm": true,
+        "dtype": "q8",
+        "modelSubdirectory": "onnx",
+        "modelFile": "decoder_model_merged_quantized.onnx"
+      },
+      "requirements": {
+        "minimumFreeStorageBytes": 150000000,
+        "estimatedRuntimeMemoryBytes": 200000000
+      },
+      "artifacts": [
+        {
+          "path": "config.json",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/config.json",
+          "sizeBytes": 4511,
+          "sha256": "b36468b138f10b13bb220468753006805a2dcfe0457eaae795e107581fc1903a"
+        },
+        {
+          "path": "generation_config.json",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/generation_config.json",
+          "sizeBytes": 185,
+          "sha256": "cce308da91e0d656e07404c70d4b9c9f5839d426f679eff6fda6dcc0e727e3b6"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/preprocessor_config.json",
+          "sizeBytes": 465,
+          "sha256": "70da3434c33eedb3b56caf4067851741dfeed02f67576dcc3c6407c2533bfaf0"
+        },
+        {
+          "path": "tokenizer.json",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/tokenizer.json",
+          "sizeBytes": 4494727,
+          "sha256": "68bcb5468c854362a615f3d2ff6a5e4091a85f4c8198993ed9a30afe0b143737"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/tokenizer_config.json",
+          "sizeBytes": 471,
+          "sha256": "ce50304582ca15b925982e96dfe56548ddbaba89b584e73176d6bb3a5a0b4713"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/special_tokens_map.json",
+          "sizeBytes": 279,
+          "sha256": "d5469a60db23249c7f8945013d78df30b44b6bf686c6bb4740f4223f77b1b535"
+        },
+        {
+          "path": "onnx/encoder_model_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/onnx/encoder_model_quantized.onnx",
+          "sizeBytes": 23082940,
+          "sha256": "860ea3477531f21904fdc6060872ecc4ea3e51714f3fa6a859f998f35941350b"
+        },
+        {
+          "path": "onnx/decoder_model_merged_quantized.onnx",
+          "url": "https://huggingface.co/Xenova/trocr-small-printed/resolve/56c1626ea0b4aab378f3228235be2e824d4256bd/onnx/decoder_model_merged_quantized.onnx",
+          "sizeBytes": 40527613,
+          "sha256": "f05fa0cb7db72c5c751c0d15a2dc53a61a43376b4af3567a85f0ed72280bcc2f"
+        }
+      ]
+    }
+  ]
+}

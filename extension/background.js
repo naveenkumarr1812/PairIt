@@ -9,7 +9,12 @@
 importScripts(
   "providers/chatgpt.js",
   "providers/claude.js",
-  "providers/gemini.js"
+  "providers/gemini.js",
+  "stateless/registry/model-registry.js",
+  "stateless/storage/model-storage.js",
+  "stateless/downloader/model-downloader.js",
+  "stateless/manager/model-manager.js",
+  "stateless/runtime/runtime-manager.js"
 );
 
 /*
@@ -52,6 +57,39 @@ let lastConnectionError =
 
 const debuggerTabs =
   new Set();
+
+let modelManager = null;
+let runtimeManager = null;
+let initStatelessPromise = null;
+
+async function initStateless() {
+  if (modelManager && runtimeManager) return;
+  if (initStatelessPromise) return initStatelessPromise;
+
+  initStatelessPromise = (async () => {
+    try {
+      const registryUrl = chrome.runtime.getURL("stateless/registry/models.json");
+      const res = await fetch(registryUrl);
+      const registryData = await res.json();
+      modelManager = new ModelManager(registryData, (modelId, progress) => {
+        chrome.runtime.sendMessage({
+          type: "stateless_progress",
+          modelId,
+          progress,
+        }).catch(() => {});
+      });
+      await modelManager.initialize();
+      runtimeManager = new RuntimeManager();
+      console.log("pairit stateless subsystem initialized.");
+    } catch (err) {
+      console.error("pairit failed to initialize stateless subsystem:", err);
+    } finally {
+      initStatelessPromise = null;
+    }
+  })();
+
+  return initStatelessPromise;
+}
 
 
 const PROVIDERS = {
@@ -774,11 +812,107 @@ async function handleServerMessage(
       });
       break;
 
+    case "model_request":
+      await handleModelRequest(message);
+      break;
+
+    case "reload_extension":
+      try {
+        chrome.runtime.reload();
+      } catch (err) {
+        console.warn("Failed to reload extension:", err);
+      }
+      break;
+
     default:
       console.log(
         "pairit received unknown bridge message:",
         message
       );
+  }
+}
+
+async function handleModelRequest(message) {
+  const { requestId, model: modelId, operation, payload } = message;
+  if (!requestId) return;
+
+  if (!pairitEnabled || !socket || socket.readyState !== WebSocket.OPEN) {
+    sendSocketMessage({
+      type: "model_error",
+      requestId,
+      model: modelId,
+      code: "bridge_not_connected",
+      message: "pairit is not connected to the local development bridge.",
+    });
+    return;
+  }
+
+  await initStateless();
+
+  if (!modelManager || !runtimeManager) {
+    sendSocketMessage({
+      type: "model_error",
+      requestId,
+      model: modelId,
+      code: "model_runtime_error",
+      message: "Stateless subsystem failed to initialize.",
+    });
+    return;
+  }
+
+  const spec = modelManager.getModelSpec(modelId);
+  if (!spec) {
+    sendSocketMessage({
+      type: "model_error",
+      requestId,
+      model: modelId,
+      code: "unknown_model",
+      message: `Unknown model '${modelId}'.`,
+    });
+    return;
+  }
+
+  const capCheck = modelManager.getRegistry().validateCapability(modelId, operation);
+  if (!capCheck.ok) {
+    sendSocketMessage({
+      type: "model_error",
+      requestId,
+      model: modelId,
+      code: "unsupported_operation",
+      message: capCheck.error,
+    });
+    return;
+  }
+
+  const isReady = await modelManager.isModelReady(modelId);
+  if (!isReady) {
+    sendSocketMessage({
+      type: "model_error",
+      requestId,
+      model: modelId,
+      code: "model_not_downloaded",
+      message: `${modelId} is not downloaded. Open PairIt and download the model first.`,
+    });
+    return;
+  }
+
+  try {
+    const response = await runtimeManager.sendModelRequest(
+      requestId,
+      spec,
+      operation,
+      payload
+    );
+    sendSocketMessage(response);
+  } catch (error) {
+    console.error(`[PairIt] Stateless request ${requestId} failed:`, error);
+    sendSocketMessage({
+      type: "model_error",
+      requestId,
+      model: modelId,
+      code: "model_runtime_error",
+      message: error?.message || "Failed to execute model request.",
+    });
   }
 }
 
@@ -1416,6 +1550,55 @@ async function handlePopupMessage(
       };
     }
 
+    case "get_stateless_models": {
+      await initStateless();
+      if (!modelManager) return [];
+      return modelManager.listAllModelsWithStatus();
+    }
+
+    case "get_stateless_storage": {
+      await initStateless();
+      if (!modelManager) return { quota: 0, usage: 0, percentage: 0 };
+      return modelManager.getStorageInfo();
+    }
+
+    case "download_stateless_model": {
+      await initStateless();
+      if (!modelManager) throw new Error("Stateless subsystem unavailable");
+      chrome.alarms.create("stateless_keepalive_" + message.modelId, { periodInMinutes: 0.2 });
+      modelManager.downloadModel(message.modelId)
+        .catch((err) => {
+          if (err.name !== "AbortError" && !err.message?.includes("aborted")) {
+            console.error(`Download failed for ${message.modelId}:`, err);
+          }
+        })
+        .finally(() => {
+          chrome.alarms.clear("stateless_keepalive_" + message.modelId);
+        });
+      return { success: true };
+    }
+
+    case "cancel_stateless_download": {
+      await initStateless();
+      if (!modelManager) return { success: false };
+      return { success: modelManager.cancelDownload(message.modelId) };
+    }
+
+    case "delete_stateless_model": {
+      await initStateless();
+      if (!modelManager) return { success: false };
+      const success = await modelManager.deleteModel(
+        message.modelId,
+        (id) => runtimeManager ? runtimeManager.unloadModel(id) : Promise.resolve()
+      );
+      return { success };
+    }
+
+    case "get_runtime_backend": {
+      await initStateless();
+      if (!runtimeManager) return { webgpu: false, device: "wasm" };
+      return runtimeManager.detectBackend();
+    }
 
     default:
 

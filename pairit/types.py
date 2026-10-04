@@ -17,6 +17,14 @@ class ChatChunk:
     done: bool = False
     raw: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def delta(self) -> str:
+        return self.content
+
+    @property
+    def backend(self) -> str | None:
+        return self.raw.get("backend") if isinstance(self.raw, dict) else None
+
 
 @dataclass(slots=True)
 class ChatResponse:
@@ -26,7 +34,7 @@ class ChatResponse:
     model: str
     content: str
     provider: str
-    raw: dict[str, Any]
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @property
     def message(self) -> dict[str, str]:
@@ -34,3 +42,21 @@ class ChatResponse:
             "role": "assistant",
             "content": self.content,
         }
+
+    @property
+    def backend(self) -> str | None:
+        return self.raw.get("backend") if isinstance(self.raw, dict) else None
+
+
+@dataclass(slots=True)
+class EmbeddingResponse:
+    """Response containing embedding vectors from an embedding model."""
+
+    model: str
+    vectors: list[list[float]]
+    dimensions: int
+    raw: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def backend(self) -> str | None:
+        return self.raw.get("backend") if isinstance(self.raw, dict) else None
