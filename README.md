@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/logo.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600"/>
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/dark-mode.png">
+        <img src="https://raw.githubusercontent.com/naveenkumarr1812/PairIt/main/assets/light-mode.png" alt="PairIt – Your Code. Your Browser. Your AI." width="600">
+    </picture>
 </p>
 
 <p align="center">
@@ -7,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/PyPI-v0.4.2-7C3AED?style=flat-square" alt="PyPI version"/></a>
+    <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/PyPI-v0.5.0-7C3AED?style=flat-square" alt="PyPI version"/></a>
   <a href="https://pypi.org/project/pairit/"><img src="https://img.shields.io/badge/python-≥%203.10-EA580C?style=flat-square" alt="Python versions"/></a>
   <img src="https://img.shields.io/badge/Chrome%20Extension-MV3-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome MV3"/>
   <img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="License MIT"/>
@@ -19,8 +22,8 @@
 
 **PairIt** is a developer-focused bridge that lets local Python applications communicate with AI models through your browser. It provides **one unified developer-facing API** for two distinct categories of models:
 
-1. **Stateful Models (Browser AI Sessions)**: Connects directly to your already-authenticated ChatGPT, Claude, or Gemini browser tabs. No API keys, no separate billing.
-2. **Stateless Models (Local In-Browser Inference)**: Runs lightweight open-source models completely locally inside your browser via WebGPU and ONNX Runtime / WASM. Zero telemetry, completely private, and works 100% offline once downloaded.
+1. **Stateful Models (Browser AI Sessions)**: Connects directly to your already-authenticated ChatGPT, Claude, or Gemini browser tabs. No PairIt API key is required; the provider's own terms and account policies still apply.
+2. **Stateless Models (Local In-Browser Inference)**: Runs supported open-source models inside your browser via WebGPU and ONNX Runtime / WASM. PairIt does not collect telemetry, and inference runs locally after the model files are downloaded.
 
 ---
 
@@ -55,13 +58,17 @@ client = Client("bge-small-en-v1.5")          # Local BGE Small Embeddings
 | **Stateful** | `claude` | `chat()` | Existing browser tab session on claude.ai |
 | **Stateful** | `gemini` | `chat()` | Existing browser tab session on gemini.google.com |
 | **Stateless** | `qwen3-0.6b` | `chat()` | Local 0.6B instruction-tuned LLM (WebGPU / WASM) |
+| **Stateless** | `smollm2-135m` | `chat()` | Local 135M chat LLM (WebGPU / WASM) |
 | **Stateless** | `smollm2-360m` | `chat()` | Local 360M state-of-the-art chat model by Hugging Face (WebGPU / WASM) |
 | **Stateless** | `qwen2.5-coder-0.5b` | `chat()` | Local 0.5B coding & technical chat model (WebGPU / WASM) |
 | **Stateless** | `smolvlm-500m` | `vision()` | Local high-quality multimodal vision-language model (WebGPU / WASM) |
 | **Stateless** | `moondream2` | `vision()` | Local 0.5B Moondream2 multimodal visual QA model (WebGPU / WASM) |
 | **Stateless** | `vit-gpt2-image-captioning` | `vision()` | Local Vision Transformer + GPT-2 image captioning model (WebGPU / WASM) |
+| **Stateless** | `trocr-small-printed` | `vision()` | Local printed-text recognition model (WebGPU / WASM) |
 | **Stateless** | `all-minilm-l6-v2` | `embed()` | Local 384-dimensional dense sentence embeddings (WebGPU / WASM) |
 | **Stateless** | `bge-small-en-v1.5` | `embed()` | Local 384-dimensional BAAI BGE small embeddings (WebGPU / WASM) |
+| **Stateless** | `gte-small` | `embed()` | Local dense sentence embeddings (WebGPU / WASM) |
+| **Stateless** | `multilingual-e5-small` | `embed()` | Local multilingual sentence embeddings (WebGPU / WASM) |
 
 ---
 
@@ -117,7 +124,7 @@ Install PairIt from the [Chrome Web Store](https://chromewebstore.google.com/det
 ```python
 from pairit import Client
 
-# Defaults to "chatgpt", or specify Client("claude") / Client("gemini")
+# Use Client("claude") or Client("gemini") for another browser session.
 client = Client("chatgpt")
 
 try:
@@ -222,7 +229,7 @@ Open the PairIt Chrome extension popup:
 2. **One-Click Download**: Download model artifacts directly from Hugging Face into the browser Cache API.
 3. **Integrity & Verification**: Every artifact is cryptographically verified with SHA-256 checksums before marking ready.
 4. **Storage Management**: View storage consumption and delete downloaded models to free disk space at any time.
-5. **Hardware Acceleration**: Automatically detects WebGPU acceleration and falls back to multithreaded WASM/SIMD if WebGPU is unsupported.
+5. **Hardware Acceleration**: Automatically detects WebGPU acceleration and falls back to WASM/SIMD when WebGPU is unsupported.
 
 ---
 
