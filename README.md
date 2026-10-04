@@ -222,44 +222,6 @@ finally:
 
 ---
 
-## Managing Stateless Models
-
-Open the PairIt Chrome extension popup:
-
-1. **Model Catalog**: View available models, category tags (LLM, Embedding, Vision), and size requirements.
-2. **One-Click Download**: Download model artifacts directly from Hugging Face into the browser Cache API.
-3. **Integrity & Verification**: Every artifact is cryptographically verified with SHA-256 checksums before marking ready.
-4. **Storage Management**: View storage consumption and delete downloaded models to free disk space at any time.
-5. **Hardware Acceleration**: Automatically detects WebGPU acceleration and falls back to WASM/SIMD when WebGPU is unsupported.
-
----
-
-## Error Handling
-
-PairIt provides structured exceptions for clean error management:
-
-```python
-from pairit import Client
-from pairit.exceptions import (
-    UnknownModelError,
-    ModelNotDownloadedError,
-    UnsupportedOperationError,
-    ExtensionNotConnectedError,
-)
-
-try:
-    client = Client("qwen3-0.6b")
-    response = client.chat("Hello!")
-except ModelNotDownloadedError:
-    print("Please open the PairIt extension popup and download 'qwen3-0.6b' first.")
-except ExtensionNotConnectedError:
-    print("Please ensure Google Chrome is running and the PairIt extension is toggled ON.")
-except UnsupportedOperationError as e:
-    print(f"Invalid operation for this model: {e}")
-```
-
----
-
 ## Safety, Privacy & Scope
 
 - 🔒 **Zero Telemetry for Stateless Models**: All stateless inference executes inside your local Chrome browser process. No prompts, images, or embeddings leave your machine.
