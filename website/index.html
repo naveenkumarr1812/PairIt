@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="PairIt connects your Python code to browser AI sessions and local in-browser models.">
+  <title>PairIt</title>
+  <link rel="icon" type="image/png" href="assets/website-logo.png?v=2">
+  <link rel="apple-touch-icon" href="assets/website-logo.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=responsive-3">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="nav wrap">
+      <a class="wordmark" href="#top" aria-label="PairIt home">
+        <picture>
+          <source srcset="assets/dark-mode.png?v=1" media="(prefers-color-scheme: dark)">
+          <img src="assets/light-mode.png?v=1" alt="PairIt" class="wordmark-logo">
+        </picture>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#choose-your-path">Choose your path</a>
+        <a href="#quickstart">Quickstart</a>
+      </nav>
+      <a class="button button-small button-dark" href="https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie" target="_blank" rel="noreferrer">Get the extension <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="top">
+      <section class="hero wrap">
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> A local bridge for curious builders</p>
+          <h1>Put your Python<br><em>in the loop.</em></h1>
+          <p class="hero-lede">PairIt lets your scripts talk to AI through the browser you already use. Bring your own ChatGPT, Claude, or Gemini session, or run a small model right on your machine.</p>
+          <div class="hero-actions">
+            <a class="button button-orange" href="#quickstart">Setup in just 2 minutes <span aria-hidden="true">↓</span></a>
+            <a class="text-link" href="#choose-your-path">See the two ways <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="hero-proof"><span class="proof-line"></span><span>No API keys for browser sessions</span><span class="proof-line"></span><span>Local models stay local</span></div>
+        </div>
+        <div class="hero-art reveal reveal-delay" aria-label="Illustration of code flowing through a browser to an AI model">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="browser-window">
+            <div class="browser-bar"><span></span><span></span><span></span><b>localhost:8765</b></div>
+            <div class="terminal-code"><div><i>from</i> pairit <i>import</i> Client</div><div class="code-gap"></div><div>client = Client(<strong>"chatgpt"</strong>)</div><div>response = client.chat(</div><div class="indent"><strong>"Explain this to me"</strong></div><div>)</div><div class="code-gap"></div><div class="muted">&gt; connected · response ready</div></div>
+          </div>
+          <div class="floating-label label-python"><span class="label-mark">⌘</span> Python</div>
+          <div class="floating-label label-browser"><span class="label-mark">◌</span> Browser session</div>
+          <div class="floating-label label-local"><span class="label-mark">✦</span> 100% local</div>
+          <div class="hero-spark spark-one">+</div><div class="hero-spark spark-two">×</div>
+        </div>
+      </section>
+
+      <section class="signal-strip">
+        <div class="wrap signal-grid">
+          <div><strong>One API</strong><span>for browser AI and local models</span></div>
+          <div><strong>Zero telemetry</strong><span>for stateless inference</span></div>
+          <div><strong>WebGPU ready</strong><span>with WASM fallback</span></div>
+          <div><strong>Python first</strong><span>built for real workflows</span></div>
+        </div>
+      </section>
+
+      <section class="section wrap" id="how-it-works">
+        <div class="section-heading reveal"><p class="eyebrow">The simple version</p><h2>Three pieces.<br><span>One smooth handoff.</span></h2><p>PairIt keeps the complicated part between your script and the browser, so you can focus on what you want to build.</p></div>
+        <div class="flow-steps">
+          <article class="flow-card reveal"><div class="step-number">01</div><div class="flow-icon icon-code">&lt;/&gt;</div><h3>Your Python app</h3><p>Install the lightweight SDK and call a familiar client from any script, notebook, or service.</p><code>pip install pairit</code></article>
+          <div class="flow-connector" aria-hidden="true">→</div>
+          <article class="flow-card flow-card-highlight reveal reveal-delay"><div class="step-number">02</div><div class="flow-icon icon-bridge">↔</div><h3>Local bridge</h3><p>The SDK and extension meet over a local WebSocket on <code>127.0.0.1:8765</code>.</p><div class="status-chip"><span></span> Connected locally</div></article>
+          <div class="flow-connector" aria-hidden="true">→</div>
+          <article class="flow-card reveal reveal-delay-2"><div class="step-number">03</div><div class="flow-icon icon-spark">✦</div><h3>Your AI surface</h3><p>Route to an authenticated browser tab or a model executing directly inside Chrome.</p><div class="mini-pills"><span>Chat</span><span>Vision</span><span>Embed</span></div></article>
+        </div>
+      </section>
+
+      <section class="path-section" id="choose-your-path">
+        <div class="wrap">
+          <div class="section-heading path-heading reveal"><p class="eyebrow">Choose your path</p><h2>Same client.<br><span>Different kind of private.</span></h2><p>Start with the workflow that matches the job. You can use both in the same project.</p></div>
+          <div class="path-grid">
+            <article class="path-card path-browser reveal"><div class="path-top"><span class="path-kicker">STATEFUL</span><span class="path-arrow">↗</span></div><h3>Borrow the browser</h3><p>Use an AI tab you are already signed into. Your code sends prompts through the open session, with no provider API key to manage.</p><div class="provider-row"><span>ChatGPT</span><span>Claude</span><span>Gemini</span></div><div class="path-foot"><span class="path-icon">◉</span><span>Best for rich, current browser sessions</span></div></article>
+            <article class="path-card path-local reveal reveal-delay"><div class="path-top"><span class="path-kicker">STATELESS</span><span class="path-arrow">↗</span></div><h3>Keep the model here</h3><p>Download a supported model once, then run chat, vision, or embeddings locally in Chrome using WebGPU or WASM.</p><div class="provider-row local-tags"><span>Qwen</span><span>SmolLM</span><span>Moondream</span></div><div class="path-foot"><span class="path-icon">⌂</span><span>Best for offline and sensitive data</span></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="quickstart wrap" id="quickstart">
+        <div class="quickstart-intro reveal"><p class="eyebrow">Your first run</p><h2>From zero to<br><span>first response.</span></h2><p>Get the extension, open a session, and let your Python code do the talking.</p><a class="text-link" href="https://github.com/naveenkumarr1812/PairIt" target="_blank" rel="noreferrer">Read the full docs <span aria-hidden="true">↗</span></a></div>
+        <div class="quickstart-list">
+          <div class="quick-step reveal"><div class="quick-number">01</div><div><h3>Install the bridge</h3><p>Install the Python package in the environment where your code runs.</p><div class="code-row"><code>pip install pairit</code><button class="copy-button" data-copy="pip install pairit" aria-label="Copy install command">Copy</button></div></div></div>
+          <div class="quick-step reveal reveal-delay"><div class="quick-number">02</div><div><h3>Connect a surface</h3><p>Install PairIt, pin it, then either open ChatGPT, Claude, or Gemini, or download a model in the popup.</p><div class="quick-options"><a class="quick-option-link" href="https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie" target="_blank" rel="noreferrer"><b>Browser</b> Get the extension ↗</a></div></div></div>
+          <div class="quick-step reveal reveal-delay-2"><div class="quick-number">03</div><div><h3>Make the call</h3><p>Point <code>Client</code> at the model or provider you want. The API stays pleasantly small.</p><div class="code-window"><div class="code-window-top"><span>hello_pairit.py</span><button class="copy-button" data-copy="from pairit import Client\n\nclient = Client(\"chatgpt\")\nresponse = client.chat(\"What should I build today?\")\nprint(response.content)" aria-label="Copy Python example">Copy code</button></div><pre><span class="syntax-key">from</span> pairit <span class="syntax-key">import</span> Client
+
+client = Client(<span class="syntax-string">"chatgpt"</span>)
+response = client.chat(<span class="syntax-string">"What should I build today?"</span>)
+<span class="syntax-key">print</span>(response.content)</pre></div></div></div>
+        </div>
+      </section>
+
+      <section class="privacy-band">
+        <div class="wrap privacy-content"><div class="privacy-lock">⌂</div><div><p class="eyebrow">Built with boundaries</p><h2>Your data has a clear address.</h2><p>Browser sessions stay in your browser. Stateless prompts, images, and embeddings run inside Chrome and do not leave your machine. Downloads are verified before they are marked ready.</p></div><div class="privacy-list"><span><b>01</b> Local bridge</span><span><b>02</b> No credential export</span><span><b>03</b> SHA-256 checks</span></div></div>
+      </section>
+
+      <section class="final-cta wrap"><div><p class="eyebrow">Ready when you are</p><h2>Give your code<br><em>a browser.</em></h2></div><div class="final-actions"><a class="button button-orange" href="https://chromewebstore.google.com/detail/pair/pkcgibncheoddhpfieekkjdffpmmenie" target="_blank" rel="noreferrer">Add to Chrome <span aria-hidden="true">↗</span></a><a class="button button-outline" href="https://github.com/naveenkumarr1812/PairIt" target="_blank" rel="noreferrer">View on GitHub</a></div></section>
+    </main>
+    <footer class="footer wrap"><a class="wordmark footer-brand" href="#top" aria-label="PairIt home"><picture><source srcset="assets/dark-mode.png?v=1" media="(prefers-color-scheme: dark)"><img src="assets/light-mode.png?v=1" alt="PairIt" class="wordmark-logo"></picture></a><span>Your code. Your browser. Your AI.</span><span>MIT licensed · made for builders</span></footer>
+  </div>
+  <div class="toast" role="status" aria-live="polite">Copied to clipboard</div>
+  <script src="script.js"></script>
+</body>
+</html>
