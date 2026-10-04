@@ -1,47 +1,67 @@
-# Privacy Policy for PairIt
+# PairIt Privacy Policy
 
-**Last updated:** September 20, 2026
+**Last updated:** October 5, 2026
 
-PairIt is an open-source browser extension and developer tool designed to bridge local development environments with active browser AI sessions.
+PairIt is an open-source Python SDK and Chrome extension that connects a local application to browser AI sessions and supported models running in Chrome. This policy describes what PairIt stores, what it sends, and what the Chrome extension permissions are used for.
 
-Your privacy is paramount. This Privacy Policy details our practices regarding data collection, handling, and security.
+## Summary
 
----
+- PairIt does not operate a PairIt cloud service or collect analytics, advertising identifiers, browsing history, prompts, or model responses.
+- The Python SDK and extension communicate over `127.0.0.1:8765` on the same device.
+- Browser-session requests are sent to the provider website that you choose, using the browser session already open there.
+- Local model files are downloaded from the pinned Hugging Face URLs in the extension registry and then cached locally by Chrome.
+- Local model inference runs in Chrome using WebGPU or WASM. PairIt does not send those inference inputs to a PairIt server.
 
-### 1. Zero Data Collection
-* **No Telemetry or Tracking:** PairIt does not collect, track, or record any personally identifiable information (PII), browsing history, analytics, or behavioral data.
-* **No External Servers:** PairIt does not operate any remote servers or databases. It does not transmit prompt texts, model responses, or metadata to any third party or to the extension creators.
-* **No Account Required:** Using PairIt does not require creating an account or providing email addresses, names, or payment details.
+## Data handling
 
----
+### Local bridge
 
-### 2. Local-Only Architecture
-* All communications occur strictly on your local device (`localhost` / `127.0.0.1:8765`) over a local WebSocket connection between your local Python application and the PairIt browser extension.
-* Neither the extension nor the Python library logs, caches, or stores chat conversations or prompts to disk.
+The Python SDK starts a local HTTP/WebSocket bridge bound by default to `127.0.0.1:8765`. It forwards requests between the SDK and the extension. The bridge keeps in-memory request state while a request is active and does not intentionally persist prompts, images, responses, or credentials to disk.
 
----
+You can configure the bind host and port when creating `Client`, but exposing the bridge beyond loopback is outside the default security model and should only be done in a controlled environment.
 
-### 3. Permissions Justification
-* **`tabs`:** Used solely to inspect open tabs and detect whether supported AI provider tabs are available when requested by your local code.
-* **`scripting`:** Used to attach DOM observers to read generated streaming tokens from open provider tabs and return them to your local Python process.
-* **`debugger`:** Used strictly to dispatch synthetic keyboard input events into the prompt textarea of the target AI provider tab.
-* **`storage`:** Used exclusively to remember the local toggle state (ON or OFF) of the extension popup on your device.
-* **`alarms`:** Used to prevent the background service worker from entering sleep mode during extended streaming generation.
-* **Host Permissions:** Restricted strictly to `http://127.0.0.1:8765/*` (local bridge) and official AI provider web applications.
+### Browser sessions
 
----
+When you use `chatgpt`, `claude`, or `gemini`, PairIt locates a supported provider tab and injects the provider-specific request/response handling needed to submit a prompt and read the generated response. The request and response are handled by that provider's website and remain subject to its terms, privacy policy, account settings, and retention practices.
 
-### 4. Third-Party Services
-When using PairIt to interact with AI services, your usage remains subject to the respective terms and privacy policies of those independent providers. PairIt does not bypass, intercept, or modify their authentication or security mechanisms.
+PairIt does not export cookies, passwords, authentication tokens, or session credentials.
 
----
+### Local models
 
-### 5. Open Source Transparency
-PairIt is open-source under the MIT License. You can review the complete source code at any time:  
-[https://github.com/naveenkumarr1812/PairIt](https://github.com/naveenkumarr1812/PairIt)
+The extension downloads model artifacts from the exact URLs and revisions listed in `extension/stateless/registry/models.json`. Before an artifact is accepted, its SHA-256 checksum is verified against the registry.
 
----
+Chrome stores local model artifacts in the Cache API and model metadata/state in IndexedDB. The extension also uses Chrome session storage for the temporary enabled/disabled bridge state. You can remove installed models from the popup; clearing the extension's site data also removes its local storage.
 
-### 6. Contact
-If you have any questions or feedback regarding this Privacy Policy, please open an issue on GitHub:  
-[https://github.com/naveenkumarr1812/PairIt/issues](https://github.com/naveenkumarr1812/PairIt/issues)
+After download, stateless chat, vision, and embedding operations execute inside the extension's offscreen worker. The model input and output are sent between the local Python process and the local extension bridge, not to a PairIt cloud endpoint.
+
+### Diagnostics
+
+PairIt may write operational messages to the local Python/Chrome developer console to help diagnose connection, provider, download, or runtime failures. It does not send those logs to PairIt servers.
+
+## Chrome permissions
+
+The extension requests the following permissions:
+
+| Permission | Purpose |
+| --- | --- |
+| `tabs` | Find supported ChatGPT, Claude, and Gemini tabs, create provider tabs from the popup, and track tab lifecycle. |
+| `scripting` | Inject the provider-specific request and response handlers into supported provider tabs. |
+| `debugger` | Keep a provider page active while a request is running, including when Chrome is minimized, and dispatch the required browser lifecycle commands. |
+| `alarms` | Reconnect the local bridge and keep long model downloads or streaming operations alive while Chrome's service worker is idle. |
+| `storage` | Use Chrome session storage for temporary extension state. Model metadata is stored separately in IndexedDB. |
+| `offscreen` | Run the local model worker in an offscreen document. |
+| `sidePanel` | Make the same popup UI available as a Chrome side panel. |
+
+Host access is limited to the local bridge, the supported provider sites, and Hugging Face hosts used for pinned model downloads. The extension does not request broad arbitrary website access.
+
+## Third-party services
+
+PairIt is not affiliated with OpenAI, Anthropic, Google, or Hugging Face. When you use those services, their own privacy policies and terms apply. Hugging Face is contacted for first-time model downloads; subsequent inference uses the locally cached artifacts unless you remove them.
+
+## Security boundaries
+
+The default bridge is loopback-only, but a local web page or local process on the same machine may be able to attempt connections to a loopback service. Do not bind the bridge to a network-facing interface unless you add appropriate network controls. Keep the extension enabled only while you intend to use the bridge.
+
+## Open source and contact
+
+The source code is available at [github.com/naveenkumarr1812/PairIt](https://github.com/naveenkumarr1812/PairIt). For questions or privacy concerns, open an issue at [github.com/naveenkumarr1812/PairIt/issues](https://github.com/naveenkumarr1812/PairIt/issues).
